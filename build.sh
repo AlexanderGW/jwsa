@@ -68,16 +68,18 @@ echo "Build '$PROJECT_NAME'"
 echo "-----------------------------------------------"
 
 # Database locations
+SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
 SRC_DUMP_FILE="$WORKSPACE_PATH/$PROJECT_NAME.sql"
 DEST_DUMP_FILE="$DEST_DUMP_PATH/$PROJECT_NAME-backup-$DATE.sql"
 
-echo -n "Test SSH connection..."
+echo -n "Test SSH connection... "
 $SSH_CONN exit
 
 if [ "$?" -eq "0" ]
 	then
 		echo "OK"
 	else
+        echo "FAILED"
 
 		if [ ! -e "$DEST_IDENTITY" ];
 			then
@@ -136,44 +138,73 @@ if [ "$?" -eq "0" ]
 			then
 				echo "OK"
 
-				# SCP dump from destination
-				echo "SCP $SRC_DUMP_FILE <-- $DEST_DUMP_FILE "
-				scp -i $DEST_IDENTITY \
-					$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
-					$SRC_DUMP_FILE
+				# TODO: Test checksum against last known backup in $DEST_DUMP_PATH - Imports can be super slow.
+				# If checksum matched, skip all of the database routines - Set $CHECKSUM = true ?
 
-				if [ "$?" -eq "0" ]
-					then
-						echo "OK"
+				# Compare the new dump size, with the more recent backup
+                echo -n "Check dump... "
+                mkdir -m 750 -p $SRC_DUMP_PATH
+                LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
 
-						# Import the copied dump
-						echo -n "Import workspace database $SRC_DUMP_FILE ... " \
-							&& mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
+                if [ -f "$SRC_DUMP_PATH/$LAST_DUMP_NAME" ];
+                    then
+                        A=`wc -c $SRC_DUMP_PATH/$LAST_DUMP_NAME | cut -d' ' -f1`
+                        #B=`wc -c $SRC_DUMP_FILE | cut -d' ' -f1`
+                        B=$SSH_CONN \
+                            "wc -c $DEST_DUMP_FILE | cut -d' ' -f1"
 
-						if [ "$?" -eq "0" ]
-							then
-								echo "OK"
+                        if [ $A -eq $B ]
+                            then
+                                echo "NO CHANGE"
+                        fi
 
-								# Delete the dump
-								echo -n "Clean up ... " \
-									&& rm $SRC_DUMP_FILE
+                        if [ $A -eq $B ]
+                            then
+                                echo "NO CHANGE"
+                            else
+                                echo "CHANGED"
 
-								if [ "$?" -eq "0" ]
-									then
-										echo "OK"
+                                # SCP dump from destination
+                                echo "SCP $SRC_DUMP_FILE <-- $DEST_DUMP_FILE "
+                                scp -i $DEST_IDENTITY \
+                                    $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
+                                    $SRC_DUMP_FILE
 
-										# Source the deploy script (drupal7, drupal8, wordpress, etc...)
-										echo "Sourcing build script '$TYPE'"
-										. "$DIR/build/$TYPE.sh"
-									else
-										echo "FAILED"
-								fi
-							else
-								echo "FAILED"
-						fi
-					else
-						echo "FAILED"
-				fi
+                                if [ "$?" -eq "0" ]
+                                    then
+
+                                        # Import the copied dump
+                                        echo -n "Import dump to workspace $SRC_DUMP_FILE ... " \
+                                            && mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
+
+                                        if [ "$?" -eq "0" ]
+                                            then
+                                                echo "OK"
+
+                                                # Delete the dump
+                                                echo -n "Clean up ... " \
+                                                    && rm $SRC_DUMP_FILE
+
+                                                if [ "$?" -eq "0" ]
+                                                    then
+                                                        echo "OK"
+                                                    else
+                                                        echo "FAILED"
+                                                fi
+                                            else
+                                                echo "FAILED"
+                                                exit 1
+                                        fi
+                                    else
+                                        echo "FAILED"
+                                        exit 1
+                                 fi
+                        fi
+                fi
+
+                # Source the deploy script (drupal7, drupal8, wordpress, etc...)
+                echo "Sourcing build script '$TYPE'"
+                . "$DIR/build/$TYPE.sh"
 			else
 				echo "FAILED"
 		fi

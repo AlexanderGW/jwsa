@@ -67,10 +67,15 @@ JOB_ENV=`echo $1 | cut -d'-' -f2`
 echo "Build '$PROJECT_NAME'"
 echo "-----------------------------------------------"
 
+IMPORT=0
+
 # Database locations
 SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
 SRC_DUMP_FILE="$WORKSPACE_PATH/$PROJECT_NAME.sql"
 DEST_DUMP_FILE="$DEST_DUMP_PATH/$PROJECT_NAME-backup-$DATE.sql"
+
+SRC_LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
+DEST_LAST_DUMP_NAME=`$SSH_CONN "ls -t $DEST_DUMP_PATH | head -1"`
 
 echo -n "Test SSH connection... "
 $SSH_CONN exit
@@ -138,69 +143,68 @@ if [ "$?" -eq "0" ]
 			then
 				echo "OK"
 
-				# TODO: Test checksum against last known backup in $DEST_DUMP_PATH - Imports can be super slow.
-				# If checksum matched, skip all of the database routines - Set $CHECKSUM = true ?
-
-				# Compare the new dump size, with the more recent backup
-                echo -n "Check dump... "
+				echo -n "Compare dump... "
                 mkdir -m 750 -p $SRC_DUMP_PATH
                 LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
+				IMPORT=0
 
-                if [ -f "$SRC_DUMP_PATH/$LAST_DUMP_NAME" ];
-                    then
-                        A=`wc -c $SRC_DUMP_PATH/$LAST_DUMP_NAME | cut -d' ' -f1`
-                        #B=`wc -c $SRC_DUMP_FILE | cut -d' ' -f1`
-                        B=$SSH_CONN \
-                            "wc -c $DEST_DUMP_FILE | cut -d' ' -f1"
+				# Compare the new dump size, with the more recent backup
+				if [ ! -z $SRC_LAST_DUMP_NAME ] && [ -f "$SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME" ];
+					then
+						A=`wc -c $SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME | cut -d' ' -f1`
+						B=`$SSH_CONN "wc -c $DEST_DUMP_PATH/$DEST_LAST_DUMP_NAME | cut -d' ' -f1"`
 
-                        if [ $A -eq $B ]
-                            then
-                                echo "NO CHANGE"
-                        fi
+						if [ "$A" == "$B" ]
+							then
+								echo "NO CHANGE"
+							else
+								echo "CHANGED"
+								IMPORT=1
+						fi
+					else
+						echo "NONE"
+						IMPORT=1
+				fi
 
-                        if [ $A -eq $B ]
-                            then
-                                echo "NO CHANGE"
-                            else
-                                echo "CHANGED"
+                if [ "$IMPORT" == "1" ]
+                	then
 
-                                # SCP dump from destination
-                                echo "SCP $SRC_DUMP_FILE <-- $DEST_DUMP_FILE "
-                                scp -i $DEST_IDENTITY \
-                                    $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
-                                    $SRC_DUMP_FILE
+                	# SCP dump from destination
+					echo "SCP $SRC_DUMP_FILE <-- $DEST_DUMP_FILE "
+					scp -i $DEST_IDENTITY \
+						$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
+						$SRC_DUMP_FILE
 
-                                if [ "$?" -eq "0" ]
-                                    then
+					if [ "$?" -eq "0" ]
+						then
 
-                                        # Import the copied dump
-                                        echo -n "Import dump to workspace $SRC_DUMP_FILE ... " \
-                                            && mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
+							# Import the copied dump
+							echo -n "Import dump to workspace $SRC_DUMP_FILE ... " \
+								&& mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
 
-                                        if [ "$?" -eq "0" ]
-                                            then
-                                                echo "OK"
+							if [ "$?" -eq "0" ]
+								then
+									echo "OK"
 
-                                                # Delete the dump
-                                                echo -n "Clean up ... " \
-                                                    && rm $SRC_DUMP_FILE
+									# Delete the dump
+									echo -n "Clean up ... " \
+										&& rm $SRC_DUMP_FILE
 
-                                                if [ "$?" -eq "0" ]
-                                                    then
-                                                        echo "OK"
-                                                    else
-                                                        echo "FAILED"
-                                                fi
-                                            else
-                                                echo "FAILED"
-                                                exit 1
-                                        fi
-                                    else
-                                        echo "FAILED"
-                                        exit 1
-                                 fi
-                        fi
-                fi
+									if [ "$?" -eq "0" ]
+										then
+											echo "OK"
+										else
+											echo "FAILED"
+									fi
+								else
+									echo "FAILED"
+									exit 1
+							fi
+						else
+							echo "FAILED"
+							exit 1
+					fi
+				fi
 
                 # Source the deploy script (drupal7, drupal8, wordpress, etc...)
                 echo "Sourcing build script '$TYPE'"

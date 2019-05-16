@@ -297,6 +297,7 @@ APP_ENV=\\\"$JOB_ENV\\\"\\n\" > $DEST_PATH/.env"
 			then
 				echo "Restoring environment..."
 
+				# Restore dumped database
 				$SSH_CONN \
 					"echo -n \"Restoring database: $DEST_DUMP_FILE ... \" \
 					&& mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
@@ -310,6 +311,7 @@ APP_ENV=\\\"$JOB_ENV\\\"\\n\" > $DEST_PATH/.env"
 
 				echo ""
 
+				# Create project webroot symlink to last successful job build
 				$SSH_CONN \
 					"echo -n \"Set symlinks for previous build... \" \
 					&& sudo ln -sfn $DEST_BUILDS_PATH/$LAST_BUILD_ID $WEBROOT"
@@ -323,6 +325,7 @@ APP_ENV=\\\"$JOB_ENV\\\"\\n\" > $DEST_PATH/.env"
 
 				echo ""
 
+				# Disable maintenance mode
 				$SSH_CONN \
 					"echo -n \"Disable maintenance mode... \" \
 					&& cd $WEBROOT && $CLI_PHAR sset system.maintenance_mode FALSE > /dev/null"
@@ -353,6 +356,7 @@ APP_ENV=\\\"$JOB_ENV\\\"\\n\" > $DEST_PATH/.env"
 
 				echo ""
 
+				# Rebuild cache
 				$SSH_CONN \
 					"echo -n \"Rebuild Drupal cache... \" \
 					&& cd $WEBROOT && $CLI_PHAR -y cache-rebuild > /dev/null"

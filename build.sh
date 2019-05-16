@@ -71,7 +71,7 @@ IMPORT=0
 
 # Database locations
 SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
-SRC_DUMP_FILE="$WORKSPACE_PATH/$PROJECT_NAME.sql"
+SRC_DUMP_FILE="$SRC_DUMP_PATH/$PROJECT_NAME.sql"
 DEST_DUMP_FILE="$DEST_DUMP_PATH/$PROJECT_NAME-backup-$DATE.sql"
 
 SRC_LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
@@ -148,7 +148,7 @@ if [ "$?" -eq "0" ]
                 LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
 				IMPORT=0
 
-				# Compare the new dump size, with the more recent backup
+				# Compare the new dump size, with the most recent project backup
 				if [ ! -z $SRC_LAST_DUMP_NAME ] && [ -f "$SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME" ];
 					then
 						A=`wc -c $SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME | cut -d' ' -f1`
@@ -166,6 +166,7 @@ if [ "$?" -eq "0" ]
 						IMPORT=1
 				fi
 
+				# Download the dump, and import it.
                 if [ "$IMPORT" == "1" ]
                 	then
 

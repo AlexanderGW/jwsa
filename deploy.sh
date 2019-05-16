@@ -74,7 +74,7 @@ SRC_DUMP_FILE="$WORKSPACE_PATH/$PROJECT_NAME-predeploy-$BUILD_ID.sql"
 DEST_DUMP_FILE="$DEST_DUMP_PATH/$PROJECT_NAME-predeploy-$BUILD_ID.sql"
 
 # Test SSH connect
-echo -n "Test SSH connection..."
+echo -n "Test SSH connection... "
 $SSH_CONN exit
 
 if [ "$?" -eq "0" ]
@@ -169,6 +169,8 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 
 						if [ "$?" -eq "0" ]
 							then
+
+								# Rsync project etc configs (apache, nginx, etc)
 								echo "RSYNC $DIR/project/$PROJECT_NAME/$SERVICE_NAME --> /etc/$SERVICE_NAME/$DIR_NAME"
 								rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" \
 									$DIR/project/$PROJECT_NAME/$SERVICE_NAME/* \
@@ -179,6 +181,7 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 										echo "OK"
 										UPDATED=1
 
+										# Create enabled site symlink if required
 										if [ "$DIR_NAME" == "sites-available" ]
 											then
 												$SSH_CONN \

@@ -70,7 +70,8 @@ LAST_BUILD_ID=`curl --user vagrant:vagrant http://jenkins.test:8080/job/$1/lastS
 #LAST_BUILD_ID=`wget -qO- http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber --user=\\\"vagrant:vagrant\\\"`
 
 # Database locations
-SRC_DUMP_FILE="$WORKSPACE_PATH/$PROJECT_NAME-predeploy-$BUILD_ID.sql"
+SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
+SRC_DUMP_FILE="$SRC_DUMP_PATH/$PROJECT_NAME-predeploy-$BUILD_ID.sql"
 DEST_DUMP_FILE="$DEST_DUMP_PATH/$PROJECT_NAME-predeploy-$BUILD_ID.sql"
 
 # Test SSH connect

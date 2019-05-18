@@ -8,6 +8,23 @@ The `test-dev` template is based on a Composer Drupal <https://github.com/drupal
 
 <https://gailey-white.com/jenkins-web-scripts-by-alex>
 
+### Pipeline example
+Example of the build and deploy scripts, used in Jenkins pipeline steps.
+
+```
+stage('Build') {
+	steps {
+		sh "~/jwsa/build.sh ${env.JOB_NAME} ${env.WORKSPACE} /path/to/project/envs/${env.JOB_NAME}/.env"
+	}
+}
+
+stage("Deploy") {
+	steps {
+		sh "~/jwsa/deploy.sh ${env.JOB_NAME} ${env.WORKSPACE} ${env.BUILD_ID}"
+	}
+}
+```
+
 ### To build the workspace.
 
 `/path/to/build.sh ${env.JOB_NAME} ${env.WORKSPACE} /path/to/env-files/${env.JOB_NAME}/.env`

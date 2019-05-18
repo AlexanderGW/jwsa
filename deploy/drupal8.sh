@@ -51,7 +51,8 @@ if [ "$BOOTSTRAP" -eq "0" ]
         # Make a copy of current build into the new build on dest, to ease diff sync
 		if [ "$LAST_BUILD_ID" != "0" ]
 			then
-				echo "COPY $DEST_BUILDS_PATH/$LAST_BUILD_ID --> $DEST_BUILD_PATH"
+				echo "COPY $DEST_BUILDS_PATH/$LAST_BUILD_ID"
+				echo "--> $DEST_BUILD_PATH"
 				$SSH_CONN \
 					"cp -R $DEST_BUILDS_PATH/$LAST_BUILD_ID/* $DEST_BUILD_PATH"
 		fi
@@ -60,7 +61,8 @@ if [ "$BOOTSTRAP" -eq "0" ]
 fi
 
 # Sync new build to destination
-echo "RSYNC $WORKSPACE_PATH --> $DEST_BUILD_PATH"
+echo "RSYNC $WORKSPACE_PATH"
+echo "--> $DEST_BUILD_PATH"
 rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" \
     $WORKSPACE_PATH/* \
     $DEST_SSH_USER@$DEST_HOST:$DEST_BUILD_PATH
@@ -260,7 +262,8 @@ APP_ENV=\\\"$JOB_ENV\\\"\\n\" > $DEST_PATH/.env"
 								fi
 
 								# SCP dump from destination
-								echo "SCP $SRC_DUMP_FILE <-- $DEST_DUMP_FILE "
+								echo "SCP $SRC_DUMP_FILE"
+								echo "<-- $DEST_DUMP_FILE "
 								scp -i $DEST_IDENTITY \
 									$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
 									$SRC_DUMP_FILE

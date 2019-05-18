@@ -188,7 +188,8 @@ if [ "$?" -eq "0" ]
                 	then
 
                 	# SCP dump from destination
-					echo "SCP $SRC_DUMP_FILE <-- $DEST_DUMP_FILE "
+					echo "SCP $SRC_DUMP_FILE"
+					echo "<-- $DEST_DUMP_FILE "
 					scp -i $DEST_IDENTITY \
 						$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
 						$SRC_DUMP_FILE

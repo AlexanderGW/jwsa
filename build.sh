@@ -166,6 +166,8 @@ if [ "$?" -eq "0" ]
 				IMPORT=0
 
 				# Compare the new dump size, with the most recent project backup
+				# We are checking the file size, rather than the checksum.
+				# Due to the dump containing a creation timestamp
 				if [ ! -z $SRC_LAST_DUMP_NAME ] && [ -f "$SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME" ];
 					then
 						A=`wc -c $SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME | cut -d' ' -f1`

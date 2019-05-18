@@ -3,8 +3,8 @@
 REVERT=0
 
 # Create storage directory
-EXISTS=$SSH_CONN \
-	"if test -d $DEST_STORAGE_PATH; then echo \"1\"; fi"
+EXISTS=`$SSH_CONN \
+	"if test -d $DEST_STORAGE_PATH; then echo \"1\"; else echo \"0\"; fi"`
 
 if [ "$EXISTS" != "1" ]
 	then
@@ -21,8 +21,8 @@ if [ "$EXISTS" != "1" ]
 fi
 
 # Create private directory
-EXISTS=$SSH_CONN \
-	"if test -d $DEST_PRIVATE_PATH; then echo \"1\"; fi"
+EXISTS=`$SSH_CONN \
+	"if test -d $DEST_PRIVATE_PATH; then echo \"1\"; else echo \"0\"; fi"`
 
 if [ "$EXISTS" != "1" ]
 	then
@@ -93,13 +93,14 @@ if [ "$?" -eq "0" ]
 		fi
 
 		# Create .env template
-		EXISTS=$SSH_CONN \
-			"if test -d $DEST_PATH/.env; then echo \"1\"; fi"
+		EXISTS=`$SSH_CONN \
+			"if test -f $DEST_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
 
 		if [ "$EXISTS" != "1" ]
 			then
 				$SSH_CONN \
 					"echo -n \"Creating .env template... \" \
+					&& touch $DEST_PATH/.env \
 					&& echo -e \"MYSQL_DATABASE=\\\"$DEST_DATABASE_NAME\\\"\\n\
 MYSQL_HOSTNAME=\\\"localhost\\\"\\n\
 MYSQL_PASSWORD=\\\"123\\\"\\n\
@@ -121,7 +122,6 @@ APP_ENV=\\\"$JOB_ENV\\\"\\n\" > $DEST_PATH/.env"
         # Set .env to new build
 		$SSH_CONN \
 			"echo -n \"Set .env for build... \" \
-			&& sudo touch $DEST_PATH/.env \
 			&& sudo ln -snf $DEST_PATH/.env $DEST_BUILD_PATH/.env"
 
 		if [ "$?" -eq "0" ]

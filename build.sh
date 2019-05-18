@@ -109,7 +109,7 @@ if [ "$?" -eq "0" ]
 fi
 
 # Create source dump directory
-EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; fi`
+EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi`
 
 if [ "$EXISTS" != "1" ]
 	then
@@ -127,7 +127,7 @@ fi
 
 # Create destination dump directory
 EXISTS=`$SSH_CONN \
-	"if test -d $DEST_DUMP_PATH; then echo \"1\"; fi"`
+	"if test -d $DEST_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi"`
 
 if [ "$EXISTS" != "1" ]
 	then

@@ -107,7 +107,7 @@ fi
 
 # Create dump directory
 EXISTS=`$SSH_CONN \
-	"if test -d $DEST_DUMP_PATH; then echo \"1\"; fi"`
+	"if test -d $DEST_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi"`
 
 if [ "$EXISTS" != "1" ]
 	then
@@ -125,7 +125,7 @@ fi
 
 # Create assets directory
 EXISTS=`$SSH_CONN \
-	"if test -d $DEST_ASSET_PATH; then echo \"1\"; fi"`
+	"if test -d $DEST_ASSET_PATH; then echo \"1\"; else echo \"0\"; fi"`
 
 if [ "$EXISTS" != "1" ]
 	then
@@ -159,7 +159,7 @@ echo "RSYNC web configuration... "
 for SERVICE_NAME in "${WEBSERVERS[@]}"
 	do
 		EXISTS=`$SSH_CONN \
-			"if test -d /etc/$SERVICE_NAME; then echo \"1\"; fi"`
+			"if test -d /etc/$SERVICE_NAME; then echo \"1\"; else echo \"0\"; fi"`
 
 		if [ "$EXISTS" == "1" ]
 			then

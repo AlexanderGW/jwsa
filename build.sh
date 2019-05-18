@@ -108,15 +108,32 @@ if [ "$?" -eq "0" ]
 		fi
 fi
 
-# Create dump directory
+# Create source dump directory
+EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; fi`
+
+if [ "$EXISTS" != "1" ]
+	then
+		$SSH_CONN \
+			"echo -n \"Creating source dump path '$SRC_DUMP_PATH'... \" \
+			&& mkdir -m 750 -p $SRC_DUMP_PATH"
+
+		if [ "$?" -eq "0" ]
+			then
+				echo "OK"
+			else
+				echo "FAILED"
+		fi
+fi
+
+# Create destination dump directory
 EXISTS=`$SSH_CONN \
 	"if test -d $DEST_DUMP_PATH; then echo \"1\"; fi"`
 
 if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
-			"echo -n \"Creating dump path '$DEST_DUMP_PATH'... \" \
-			&& mkdir -m 755 -p $DEST_DUMP_PATH"
+			"echo -n \"Creating destination dump path '$DEST_DUMP_PATH'... \" \
+			&& mkdir -m 750 -p $DEST_DUMP_PATH"
 
 		if [ "$?" -eq "0" ]
 			then

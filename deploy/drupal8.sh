@@ -109,7 +109,10 @@ MYSQL_USER=\\\"dbuser\\\"\\n\
 \\n\
 HASH_SALT=\\\"\\\"\\n\
 \\n\
-APP_ENV=\\\"$JOB_ENV\\\"\\n\" > $DEST_PATH/.env"
+APP_ENV=\\\"$JOB_ENV\\\"\\n\
+\\n\
+PRIVATE_PATH=\\\"$DEST_PRIVATE_PATH\\\"\\n\
+TWIG_PHP_STORAGE_PATH=\\\"$DEST_PRIVATE_PATH/php\\\"\" > $DEST_PATH/.env"
 
 				if [ "$?" -eq "0" ]
 					then

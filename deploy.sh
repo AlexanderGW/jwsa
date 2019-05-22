@@ -131,7 +131,7 @@ if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
 			"echo -n \"Creating asset path '$DEST_ASSET_PATH'... \" \
-			&& install -d -m 0775 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_ASSET_PATH"
+			&& sudo install -d -m 0775 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_ASSET_PATH"
 
 		if [ "$?" -eq "0" ]
 			then

@@ -10,7 +10,7 @@ if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
 			"echo -n \"Creating storage path '$DEST_STORAGE_PATH'... \" \
-			&& install -d -m 0775 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_STORAGE_PATH"
+			&& sudo install -d -m 0775 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_STORAGE_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -28,7 +28,7 @@ if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
 			"echo -n \"Creating private path '$DEST_PRIVATE_PATH'... \" \
-			&& install -d -m 0775 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_PRIVATE_PATH"
+			&& sudo install -d -m 0775 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_PRIVATE_PATH"
 
 		if [ "$?" -eq "0" ]
 			then

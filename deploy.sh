@@ -62,7 +62,7 @@ JOB_ENV=`echo $1 | cut -d'-' -f2`
 echo "Deploy '$PROJECT_NAME' (build: $BUILD_ID)"
 echo "-----------------------------------------------"
 
-declare -a WEBSERVERS=("apache" "nginx")
+declare -a WEBSERVERS=("apache" "httpd" "nginx")
 declare -a WEBSERVER_CONF_DIRS=("sites-available" "conf.d")
 
 # Get last successful build ID for the project

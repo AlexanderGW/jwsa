@@ -9,6 +9,10 @@ WEBSERVER='nginx'
 # Destination host
 DEST_HOST='deploy.test';
 
+# Database hosts
+DEST_DB_HOST='127.0.0.1'
+SRC_DB_HOST='127.0.0.1'
+
 # REMEMBER: SSH keys need to be manually installed on the Jenkins deployment server.
 DEST_IDENTITY='/var/lib/jenkins/.ssh/deploy-test';
 
@@ -36,6 +40,8 @@ DEST_PRIVATE_PATH="$DEST_PATH/private"
 # Users
 DEST_SSH_USER='root';
 DEST_WEB_USER='www-data';
+DEST_DB_USER=$PROJECT_NAME
+SRC_DB_USER=$PROJECT_NAME
 
 # Databases
 SRC_DATABASE_NAME=$PROJECT_NAME;

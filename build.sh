@@ -125,6 +125,45 @@ if [ "$EXISTS" != "1" ]
 		fi
 fi
 
+# Check local build database
+RESULT=`$SSH_CONN \
+        "echo -n \"Check local database... \" \
+        && mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
+
+if [ "$RESULT" != "$SRC_DATABASE_NAME" ];
+    then
+        echo "NONE"
+
+        RESULT=`$SSH_CONN \
+                "echo -n \"Create local database... \" \
+                mysql -e \"CREATE DATABASE '$SRC_DATABASE_NAME'\""`
+
+#        if [ "$RESULT" != "$SRC_DATABASE_NAME" ];
+#            then
+#                echo "OK"
+#            else
+#                echo "FAILED"
+#                exit 1
+#        fi
+    else
+        echo "EXISTS"
+fi
+
+# Check local build database user permissions
+# TODO: Generate password, and store in the local .env
+SRC_DB_PASSWD='1111'
+RESULT=`echo -n "Create local database user permissions... " \
+        && mysql -se "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \
+            \`$SRC_DATABASE_NAME\`.* TO '$SRC_DB_USER'@'$SRC_DB_HOST' IDENTIFIED BY '$SRC_DB_PASSWD';" \
+        ; mysql -se "FLUSH PRIVILEGES;"`
+
+if [ "$RESULT" != "$SRC_DATABASE_NAME" ];
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+fi
+
 # Create destination dump directory
 EXISTS=`$SSH_CONN \
 	"if test -d $DEST_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi"`
@@ -143,6 +182,83 @@ if [ "$EXISTS" != "1" ]
 		fi
 fi
 
+# Check destination build database
+RESULT=`$SSH_CONN \
+        "echo -n \"Check destination database... \" \
+        && mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
+
+if [ "$RESULT" != "$SRC_DATABASE_NAME" ];
+    then
+        echo "NONE"
+
+        RESULT=`$SSH_CONN \
+                "echo -n \"Create destination database... \" \
+                mysql -e \"CREATE DATABASE '$SRC_DATABASE_NAME'\""`
+
+#        if [ "$RESULT" != "$SRC_DATABASE_NAME" ];
+#            then
+#                echo "OK"
+#            else
+#                echo "FAILED"
+#                exit 1
+#        fi
+    else
+        echo "EXISTS"
+fi
+
+# Check destination build database user permissions
+# TODO: Generate password, and store in the remote .env
+DEST_DB_PASSWD='1111'
+RESULT=`$SSH_CONN \
+        "echo -n \"Create destination database user permissions... \" \
+        && mysql -se \"GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \
+            \`$DEST_DATABASE_NAME\`.* TO '$DEST_DB_USER'@'$DEST_DB_HOST' IDENTIFIED BY '$DEST_DB_PASSWD';\" \
+        ; mysql -se \"FLUSH PRIVILEGES;\""`
+
+if [ "$RESULT" != "$SRC_DATABASE_NAME" ];
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+fi
+
+# Check local build database user
+#RESULT=`$SSH_CONN \
+#        "echo -n \"Check local database... \" \
+#        && mysql -se \"SELECT COUNT(user) FROM mysql.user WHERE user = '$DEST_DB_USER'\""`
+#
+#if [ "$RESULT" == "0" ];
+#    then
+#        echo "NONE"
+#
+#
+#    else
+#        echo "EXISTS"
+#fi
+
+#RESULT=`$SSH_CONN \
+#        "echo -n \"Check local database user permissions... \" \
+#        && mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
+#
+#if [ "$RESULT" == "0" ];
+#    then
+#        echo "NONE"
+#
+#        RESULT=`$SSH_CONN \
+#        "echo -n \"Create local database... \" \
+#        && mysql -se \"SELECT COUNT(user) FROM mysql.user WHERE user = 'root'\""`
+#
+#        if [ "$RESULT" != "$SRC_DATABASE_NAME" ];
+#            then
+#                echo "OK"
+#            else
+#                echo "FAILED"
+#                exit 1
+#        fi
+#    else
+#        echo "EXISTS"
+#fi
+
 # Link .env to new build
 echo -n "Set .env for build... "
 cd $WORKSPACE_PATH && ln -snf $ENV_FILE .env
@@ -151,9 +267,9 @@ if [ "$?" -eq "0" ]
 	then
 		echo "OK"
 
-		# Sync database from the destination env, to the workspace env
+		# Sync database from the remote env, to the workspace env
 		$SSH_CONN \
-			"echo -n \"Dump environment database... \" \
+			"echo -n \"Dump remote database... \" \
 			&& mysqldump $DEST_DATABASE_NAME > $DEST_DUMP_FILE"
 
 		if [ "$?" -eq "0" ]

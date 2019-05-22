@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# ------------------------------------------------------------------------
-# JENKINS DEPLOYMENT SCRIPT FOR PANLOGIC
-# WRITTEN BY: ALEXANDER GAILEY-WHITE
-# ------------------------------------------------------------------------
-
 if [ $# -lt 2 ]
   then
     echo "Required arguments; PROJECT_NAME, WORKSPACE, ENV_FILE"

@@ -251,8 +251,6 @@ TWIG_PHP_STORAGE_PATH=\\\"$DEST_PRIVATE_PATH/php\\\"\" > $DEST_PATH/.env"
 
 								echo "OK"
 
-								echo "sudo su $DEST_WEB_USER -c \"ls $DEST_BUILDS_PATH | grep -v -e \\\"$BUILD_ID\\\" | cut -f2 -d: | xargs rm -rf\""
-
 								# Update deployment information
 								$SSH_CONN \
 									"echo $BUILD_ID > $DEST_PATH/.active-build"

@@ -191,7 +191,7 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 
 												if [ "$?" -eq "0" ]
 													then
-														break 2
+														break
 												fi
 										fi
 									else

@@ -113,7 +113,7 @@ if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
 			"echo -n \"Creating dump path '$DEST_DUMP_PATH'... \" \
-			&& mkdir -m 755 -p $DEST_DUMP_PATH"
+			&& sudo install -d -m 0700 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_DUMP_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -131,7 +131,7 @@ if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
 			"echo -n \"Creating asset path '$DEST_ASSET_PATH'... \" \
-			&& sudo install -d -m 0775 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_ASSET_PATH"
+			&& sudo install -d -m 0770 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_ASSET_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -144,7 +144,7 @@ fi
 # Make build path
 $SSH_CONN \
 	"echo -n \"Creating build path '$DEST_BUILD_PATH'... \" \
-	&& mkdir -m 775 -p $DEST_BUILD_PATH"
+	&& sudo install -d -m 0770 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_BUILD_PATH"
 
 if [ "$?" -eq "0" ]
 	then

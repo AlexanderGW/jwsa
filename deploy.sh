@@ -174,7 +174,7 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 								# Rsync project etc configs (apache, nginx, etc)
 								echo "RSYNC $DIR/project/$PROJECT_NAME/$SERVICE_NAME"
 								echo "--> /etc/$SERVICE_NAME/$DIR_NAME"
-								rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" \
+								rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" --rsync-path="sudo rsync" \
 									$DIR/project/$PROJECT_NAME/$SERVICE_NAME/* \
 									$DEST_SSH_USER@$DEST_HOST:/etc/$SERVICE_NAME/$DIR_NAME
 

@@ -90,3 +90,10 @@ Comming soon...
 
 #### WordPress module
 Comming soon...
+
+### Rsync
+The rsync command for webserver configs, requires `sudo` access. Add the following to `sudo visudo` to allow this.
+
+```
+<username> ALL=NOPASSWD:<path to rsync>
+```

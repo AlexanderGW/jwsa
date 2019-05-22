@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# ----------------------------------------
+# ------------------------------------------------------------------------
 # JENKINS DEPLOYMENT SCRIPT FOR PANLOGIC
 # WRITTEN BY: ALEXANDER GAILEY-WHITE
-# ----------------------------------------
+# ------------------------------------------------------------------------
 
 if [ $# -lt 3 ]
   then
@@ -35,8 +35,7 @@ if ! [[ "$3" =~ ^[0-9]+$ ]]
 fi
 BUILD_ID=$3
 
-# Date string for database dump suffix
-DATE=`date +%Y%m%d-%H%M%S`
+# ------------------------------------------------------------------------
 
 # Current directory for sourcing
 DIR="${BASH_SOURCE%/*}"
@@ -44,6 +43,23 @@ if [[ ! -d "$DIR" ]];
 	then
 		DIR="$PWD";
 fi
+
+# ------------------------------------------------------------------------
+
+# Current directory for sourcing
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]];
+	then
+		DIR="$PWD";
+fi
+
+# Source JWSA variables and functions
+echo "Sourcing JWSA variables"
+. "$DIR/jwsa/variables.sh"
+echo "Sourcing JWSA functions"
+. "$DIR/jwsa/functions.sh"
+
+# ------------------------------------------------------------------------
 
 # Source the projects deployment variables
 echo -n "Sourcing project script '$PROJECT_NAME'... "
@@ -57,10 +73,8 @@ if [ -z ${TYPE+x} ];
 		echo "OK"
 fi
 
-JOB_ENV=`echo $1 | cut -d'-' -f2`
-
 echo "Deploy '$PROJECT_NAME' (build: $BUILD_ID)"
-echo "-----------------------------------------------"
+echo "------------------------------------------------------------------------"
 
 declare -a WEBSERVERS=("apache" "httpd" "nginx")
 declare -a WEBSERVER_CONF_DIRS=("sites-available" "conf.d")
@@ -87,11 +101,11 @@ if [ "$?" -eq "0" ]
 			then
 				HOSTNAME='alexgw@gmail.com'
 				ssh-keygen -t rsa -C "$HOSTNAME" -f "$DEST_IDENTITY" -P ""
-				echo "-------------------------------------------------------------------------------------------"
+				echo "------------------------------------------------------------------------"
 				cat $DEST_IDENTITY.pub
-				echo "-------------------------------------------------------------------------------------------"
+				echo "------------------------------------------------------------------------"
 				echo "sudo su jenkins -c \"ssh-copy-id -i $DEST_IDENTITY $DEST_SSH_USER@$DEST_HOST\""
-				echo "-------------------------------------------------------------------------------------------"
+				echo "------------------------------------------------------------------------"
 				eval $(ssh-agent -s)
 				ssh-add ~/.ssh/$PROJECT_NAME
 				ssh-copy-id -i $DEST_IDENTITY $DEST_SSH_USER@$DEST_HOST
@@ -172,11 +186,7 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 							then
 
 								# Rsync project etc configs (apache, nginx, etc)
-								echo "RSYNC $DIR/project/$PROJECT_NAME/$SERVICE_NAME"
-								echo "--> /etc/$SERVICE_NAME/$DIR_NAME"
-								rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" --rsync-path="sudo rsync" \
-									$DIR/project/$PROJECT_NAME/$SERVICE_NAME/* \
-									$DEST_SSH_USER@$DEST_HOST:/etc/$SERVICE_NAME/$DIR_NAME
+                                sync_to_remote_sudo $DIR/project/$PROJECT_NAME/$SERVICE_NAME/* /etc/$SERVICE_NAME/$DIR_NAME
 
 								if [ "$?" -eq "0" ]
 									then
@@ -186,8 +196,7 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 										# Create enabled site symlink if required
 										if [ "$DIR_NAME" == "sites-available" ]
 											then
-												$SSH_CONN \
-													"sudo ln -sfn /etc/$SERVICE_NAME/$DIR_NAME/$PROJECT_NAME.conf /etc/$SERVICE_NAME/sites-enabled/$PROJECT_NAME.conf"
+												set_remote_link /etc/$SERVICE_NAME/sites-enabled/$PROJECT_NAME.conf /etc/$SERVICE_NAME/$DIR_NAME/$PROJECT_NAME.conf
 
 												if [ "$?" -eq "0" ]
 													then
@@ -212,9 +221,7 @@ if [ "$UPDATED" == "1" ];
 	then
 		for SERVICE in ${DEST_SERVICES[@]}
 		do
-			$SSH_CONN \
-				"echo \"Restart service '$SERVICE'...\" \
-				&& sudo service $SERVICE restart"
+			restart_remote_service $SERVICE
 
 			if [ "$?" -eq "0" ]
 				then
@@ -231,6 +238,6 @@ echo ""
 echo "Sourcing deploy script '$TYPE'"
 . "$DIR/deploy/$TYPE.sh"
 
-echo "-----------------------------------------------"
+echo "------------------------------------------------------------------------"
 echo "FAILED";
 exit 1;

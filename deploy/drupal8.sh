@@ -61,11 +61,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 fi
 
 # Sync new build to destination
-echo "RSYNC $WORKSPACE_PATH"
-echo "--> $DEST_BUILD_PATH"
-rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" \
-    $WORKSPACE_PATH/* \
-    $DEST_SSH_USER@$DEST_HOST:$DEST_BUILD_PATH
+sync_to_remote $WORKSPACE_PATH/* $DEST_BUILD_PATH
 
 if [ "$?" -eq "0" ]
     then
@@ -74,11 +70,10 @@ if [ "$?" -eq "0" ]
         # Set maintenance mode, and dump a copy of the database.
         if [ "$BOOTSTRAP" -eq "0" ]
         	then
-        		$SSH_CONN \
-					"echo \"Enable maintenance mode... OK\" \
-					&& cd $WEBROOT && $CLI_PHAR sset system.maintenance_mode TRUE \
-					&& echo -n \"Dump database... \" \
-					&& mysqldump $DEST_DATABASE_NAME > $DEST_DUMP_FILE"
+        		echo "Enable maintenance mode... OK" \
+                && remote_cli_cmd sset system.maintenance_mode TRUE \
+                && echo -n "Dump database... " \
+                && mysql_database_remote_export $DEST_DATABASE_NAME $DEST_DUMP_FILE
 
 				if [ "$?" -eq "0" ]
 					then

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# ----------------------------------------
+# ------------------------------------------------------------------------
 # JENKINS DEPLOYMENT SCRIPT FOR PANLOGIC
 # WRITTEN BY: ALEXANDER GAILEY-WHITE
-# ----------------------------------------
+# ------------------------------------------------------------------------
 
 if [ $# -lt 2 ]
   then
@@ -35,8 +35,7 @@ if ! [ -e "$3" ]
 fi
 ENV_FILE=$3
 
-# Date string for database dump suffix
-DATE=`date +%Y%m%d-%H%M%S`
+# ------------------------------------------------------------------------
 
 # Current directory for sourcing
 DIR="${BASH_SOURCE%/*}"
@@ -44,6 +43,14 @@ if [[ ! -d "$DIR" ]];
 	then
 		DIR="$PWD";
 fi
+
+# Source JWSA variables and functions
+echo "Sourcing JWSA variables"
+. "$DIR/jwsa/variables.sh"
+echo "Sourcing JWSA functions"
+. "$DIR/jwsa/functions.sh"
+
+# ------------------------------------------------------------------------
 
 # Source the projects deployment variables
 echo -n "Sourcing project script '$PROJECT_NAME'... "
@@ -61,11 +68,8 @@ fi
 # Override the webroot with the Jenkins workspace
 WEBROOT=$WORKSPACE_PATH
 
-# Environment we are building (dev, stage, prod, etc.)
-JOB_ENV=`echo $1 | cut -d'-' -f2`
-
 echo "Build '$PROJECT_NAME'"
-echo "-----------------------------------------------"
+echo "------------------------------------------------------------------------"
 
 IMPORT=0
 
@@ -77,75 +81,47 @@ DEST_DUMP_FILE="$DEST_DUMP_PATH/$PROJECT_NAME-backup-$DATE.sql"
 SRC_LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
 DEST_LAST_DUMP_NAME=`$SSH_CONN "ls -t $DEST_DUMP_PATH | head -1"`
 
-echo -n "Test SSH connection... "
-$SSH_CONN exit
+# Test remote SSH connection
+remote_test_connect
 
 if [ "$?" -eq "0" ]
-	then
-		echo "OK"
-	else
+    then
+        echo "OK"
+    else
         echo "FAILED"
 
-		if [ ! -e "$DEST_IDENTITY" ];
-			then
-				HOSTNAME='alexgw@gmail.com'
-				ssh-keygen -t rsa -C "$HOSTNAME" -f "$DEST_IDENTITY" -P ""
-				echo "-------------------------------------------------------------------------------------------"
-				cat $DEST_IDENTITY.pub
-				echo "-------------------------------------------------------------------------------------------"
-				echo "sudo su jenkins -c \"ssh-copy-id -i $DEST_IDENTITY $DEST_SSH_USER@$DEST_HOST\""
-				echo "-------------------------------------------------------------------------------------------"
-				eval $(ssh-agent -s)
-				ssh-add ~/.ssh/$PROJECT_NAME
-				ssh-copy-id -i $DEST_IDENTITY $DEST_SSH_USER@$DEST_HOST
 
-				$SSH_CONN exit
-				if [ ! "$?" -eq "0" ]
-					then
-						echo "FAILED"
-						exit 1
-				fi
-		fi
+        if [ ! -e "$DEST_IDENTITY" ];
+            then
+                HOSTNAME='example.com'
+                ssh-keygen -t rsa -C "$HOSTNAME" -f "$DEST_IDENTITY" -P ""
+                echo "------------------------------------------------------------------------"
+                cat $DEST_IDENTITY.pub
+                echo "------------------------------------------------------------------------"
+                echo "sudo su jenkins -c \"ssh-copy-id -i $DEST_IDENTITY $DEST_SSH_USER@$DEST_HOST\""
+                echo "------------------------------------------------------------------------"
+                eval $(ssh-agent -s)
+                ssh-add ~/.ssh/$PROJECT_NAME
+                ssh-copy-id -i $DEST_IDENTITY $DEST_SSH_USER@$DEST_HOST
+
+                remote_test_connect
+
+                if [ ! "$?" -eq "0" ]
+                    then
+                        echo "FAILED"
+                        exit 1
+                fi
+        fi
 fi
 
-# Create source dump directory
-EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi`
+# Create local dump path
+create_local_path_if_not_exists $SRC_DUMP_PATH 750
 
-if [ "$EXISTS" != "1" ]
-	then
-		$SSH_CONN \
-			"echo -n \"Creating source dump path '$SRC_DUMP_PATH'... \" \
-			&& mkdir -m 750 -p $SRC_DUMP_PATH"
-
-		if [ "$?" -eq "0" ]
-			then
-				echo "OK"
-			else
-				echo "FAILED"
-		fi
-fi
-
-# Create destination dump directory
-EXISTS=`$SSH_CONN \
-	"if test -d $DEST_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi"`
-
-if [ "$EXISTS" != "1" ]
-	then
-		$SSH_CONN \
-			"echo -n \"Creating destination dump path '$DEST_DUMP_PATH'... \" \
-			&& mkdir -m 750 -p $DEST_DUMP_PATH"
-
-		if [ "$?" -eq "0" ]
-			then
-				echo "OK"
-			else
-				echo "FAILED"
-		fi
-fi
+# Create destination database dump path
+create_remote_path_if_not_exists $DEST_DUMP_PATH 750
 
 # Link .env to new build
-echo -n "Set .env for build... "
-cd $WORKSPACE_PATH && ln -snf $ENV_FILE .env
+set_local_link_in_workspace .env $ENV_FILE
 
 if [ "$?" -eq "0" ]
 	then
@@ -160,8 +136,8 @@ if [ "$?" -eq "0" ]
 			then
 				echo "OK"
 
-				echo -n "Compare dump... "
-                mkdir -m 750 -p $SRC_DUMP_PATH
+				echo "Compare dump... "
+                create_local_path_if_not_exists $SRC_DUMP_PATH 750
                 LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
 				IMPORT=0
 
@@ -171,7 +147,7 @@ if [ "$?" -eq "0" ]
 				if [ ! -z $SRC_LAST_DUMP_NAME ] && [ -f "$SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME" ];
 					then
 						A=`wc -c $SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME | cut -d' ' -f1`
-						B=`$SSH_CONN "wc -c $DEST_DUMP_PATH/$DEST_LAST_DUMP_NAME | cut -d' ' -f1"`
+						B=`remote_cmd "wc -c $DEST_DUMP_PATH/$DEST_LAST_DUMP_NAME | cut -d' ' -f1"`
 
 						if [ "$A" == "$B" ]
 							then
@@ -189,19 +165,14 @@ if [ "$?" -eq "0" ]
                 if [ "$IMPORT" == "1" ]
                 	then
 
-                	# SCP dump from destination
-					echo "SCP $SRC_DUMP_FILE"
-					echo "<-- $DEST_DUMP_FILE "
-					scp -i $DEST_IDENTITY \
-						$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
-						$SRC_DUMP_FILE
+                	# Copy remote dump to local dump path
+					copy_from_remote $DEST_DUMP_FILE $SRC_DUMP_FILE
 
 					if [ "$?" -eq "0" ]
 						then
 
 							# Import the copied dump
-							echo -n "Import dump to workspace $SRC_DUMP_FILE ... " \
-								&& mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
+                            mysql_database_local_import $SRC_DATABASE_NAME $SRC_DUMP_FILE
 
 							if [ "$?" -eq "0" ]
 								then
@@ -237,6 +208,6 @@ if [ "$?" -eq "0" ]
 		echo "FAILED"
 fi
 
-echo "-----------------------------------------------"
+echo "------------------------------------------------------------------------"
 echo "FAILED";
 exit 1;

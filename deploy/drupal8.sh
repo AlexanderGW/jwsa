@@ -88,8 +88,41 @@ if [ "$?" -eq "0" ]
 						exit 1
 				fi
 			else
-				# TODO: COPY LOCAL DB TO DEST?
-				echo ""
+
+				# SCP local dump to destination
+                echo "SCP $SRC_DUMP_FILE"
+                echo "--> $DEST_DUMP_FILE "
+                scp -i $DEST_IDENTITY \
+                    $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
+                    $SRC_DUMP_FILE
+
+                if [ "$?" -eq "0" ]
+                    then
+
+                        # Import the copied dump
+                        echo -n "Import dump to destination $DEST_DUMP_FILE ... " \
+                            && mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE
+
+                        if [ "$?" -eq "0" ]
+                            then
+                                echo "OK"
+
+                                # Delete the dump
+                                echo -n "Clean up ... " \
+                                    && rm -rf $DEST_DUMP_FILE
+
+                                if [ "$?" -eq "0" ]
+                                    then
+                                        echo "OK"
+                                    else
+                                        echo "FAILED"
+                                fi
+                            else
+                                echo "FAILED"
+                        fi
+                    else
+                        echo "FAILED"
+                fi
 		fi
 
 		# Create .env template

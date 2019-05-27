@@ -209,7 +209,7 @@ if [ "$?" -eq "0" ]
 
 									# Delete the dump
 									echo -n "Clean up ... " \
-										&& rm $SRC_DUMP_FILE
+										&& rm -rf $SRC_DUMP_FILE
 
 									if [ "$?" -eq "0" ]
 										then

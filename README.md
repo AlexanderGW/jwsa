@@ -8,6 +8,10 @@ The `test-dev` template is based on a Composer Drupal <https://github.com/drupal
 
 <https://gailey-white.com/jenkins-web-scripts-by-alex>
 
+### Script limitations
+These scripts expect a partial pre-exisiting environment setup (databases, and populated `.env` files).
+You will need to install Drupal, then populate the `.env` files with the appropriate credentials.  
+
 ### Pipeline example
 Example of the build and deploy scripts, used in Jenkins pipeline steps.
 

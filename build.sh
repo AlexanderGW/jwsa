@@ -161,7 +161,7 @@ if [ "$?" -eq "0" ]
 				echo "OK"
 
 				echo -n "Compare dump... "
-                mkdir -m 750 -p $SRC_DUMP_PATH
+                #mkdir -m 750 -p $SRC_DUMP_PATH
                 LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
 				IMPORT=0
 

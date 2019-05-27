@@ -4,7 +4,7 @@ BASH scripts to running important Drush/WP-CLI commands for build, and deploymen
 
 Call these scripts from Declarative Pipelines steps, or as an executed shell script (if using the execute script method, the environment variables that you pass to the shell would be `${JOB_NAME}` instead of `${env.JOB_NAME}` used in Groovy pipelines)
 
-The `test-dev` template is based on a Composer Drupal <https://github.com/drupal-composer/drupal-project> PuPHPet <https://puphpet.com> Vagrant environment
+The `deploy-test` project template is based on a Composer Drupal <https://github.com/drupal-composer/drupal-project> PuPHPet <https://puphpet.com> Vagrant environment
 
 <https://gailey-white.com/jenkins-web-scripts-by-alex>
 

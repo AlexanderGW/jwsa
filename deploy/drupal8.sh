@@ -125,36 +125,6 @@ if [ "$?" -eq "0" ]
                 fi
 		fi
 
-		# Create .env template
-		EXISTS=`$SSH_CONN \
-			"if test -f $DEST_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
-
-		if [ "$EXISTS" != "1" ]
-			then
-				$SSH_CONN \
-					"echo -n \"Creating .env template... \" \
-					&& touch $DEST_PATH/.env \
-					&& echo -e \"MYSQL_DATABASE=\\\"$DEST_DATABASE_NAME\\\"\\n\
-MYSQL_HOSTNAME=\\\"localhost\\\"\\n\
-MYSQL_PASSWORD=\\\"123\\\"\\n\
-MYSQL_PORT=3306\\n\
-MYSQL_USER=\\\"dbuser\\\"\\n\
-\\n\
-HASH_SALT=\\\"\\\"\\n\
-\\n\
-APP_ENV=\\\"$JOB_ENV\\\"\\n\
-\\n\
-PRIVATE_PATH=\\\"$DEST_PRIVATE_PATH\\\"\\n\
-TWIG_PHP_STORAGE_PATH=\\\"$DEST_PRIVATE_PATH/php\\\"\" > $DEST_PATH/.env"
-
-				if [ "$?" -eq "0" ]
-					then
-						echo "OK"
-					else
-						echo "FAILED"
-				fi
-		fi
-
         # Set .env to new build
 		$SSH_CONN \
 			"echo -n \"Set .env for build... \" \
@@ -269,49 +239,6 @@ TWIG_PHP_STORAGE_PATH=\\\"$DEST_PRIVATE_PATH/php\\\"\" > $DEST_PATH/.env"
 												fi
 										fi
 								fi
-
-								# Remove old builds, leaving current and previous
-								if [ "$LAST_BUILD_ID" != "0" ]
-									then
-										$SSH_CONN \
-											"echo -n \"Clean up... \" \
-											&& sudo su $DEST_WEB_USER -c \"ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" -e \"$LAST_BUILD_ID\" | cut -f2 -d: | xargs rm -rf\""
-									else
-										$SSH_CONN \
-											"echo -n \"Clean up... \" \
-											&& sudo su $DEST_WEB_USER -c \"ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" | cut -f2 -d: | xargs rm -rf\""
-								fi
-
-								echo "OK"
-
-								# Update deployment information
-								$SSH_CONN \
-									"echo $BUILD_ID > $DEST_PATH/.active-build"
-
-								# Reduce settings file permissions
-								if [ "$BOOTSTRAP" -eq "0" ]
-									then
-										$SSH_CONN \
-											"sudo chmod 644 $WEBROOT_SETTINGS"
-								fi
-
-								# SCP dump from destination
-								echo "SCP $SRC_DUMP_FILE"
-								echo "<-- $DEST_DUMP_FILE "
-								scp -i $DEST_IDENTITY \
-									$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
-									$SRC_DUMP_FILE
-
-								if [ "$?" -eq "0" ]
-									then
-										echo "OK"
-									else
-										echo "FAILED"
-								fi
-
-								echo "-----------------------------------------------"
-								echo "SUCCESS"
-								exit 0
 							else
 								echo "FAILED"
 
@@ -332,7 +259,12 @@ TWIG_PHP_STORAGE_PATH=\\\"$DEST_PRIVATE_PATH/php\\\"\" > $DEST_PATH/.env"
 		# Revert environment to previous build
 		if [ "$REVERT" -eq "1" ]
 			then
-				echo "Restoring environment..."
+				echo ""
+				echo "***********************************************"
+				echo "***********************************************"
+				echo "* R E V E R T I N G  -  E N V I R O N M E N T *"
+				echo "***********************************************"
+				echo "***********************************************"
 
 				# Restore dumped database
 				$SSH_CONN \

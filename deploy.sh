@@ -51,7 +51,7 @@ echo -n "Sourcing project script '$PROJECT_NAME'... "
 
 if [ -z ${TYPE+x} ];
 	then
-		echo "FAIL"
+		echo "FAILED"
 		exit 1;
 	else
 		echo "OK"
@@ -227,10 +227,94 @@ fi
 
 echo ""
 
+# Create .env template
+EXISTS=`$SSH_CONN \
+    "if test -f $DEST_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
+
+if [ "$EXISTS" != "1" ]
+    then
+        $SSH_CONN \
+            "echo -n \"Creating .env template... \" \
+            && touch $DEST_PATH/.env \
+            && echo -e \"MYSQL_DATABASE=\\\"$DEST_DATABASE_NAME\\\"\\n\
+MYSQL_HOSTNAME=\\\"localhost\\\"\\n\
+MYSQL_PASSWORD=\\\"123\\\"\\n\
+MYSQL_PORT=3306\\n\
+MYSQL_USER=\\\"dbuser\\\"\\n\
+\\n\
+HASH_SALT=\\\"\\\"\\n\
+\\n\
+APP_ENV=\\\"$JOB_ENV\\\"\\n\
+\\n\
+PRIVATE_PATH=\\\"$DEST_PRIVATE_PATH\\\"\\n\
+TWIG_PHP_STORAGE_PATH=\\\"$DEST_PRIVATE_PATH/php\\\"\" > $DEST_PATH/.env"
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+        fi
+fi
+
 # Source the deploy script (drupal7, drupal8, wordpress, etc...)
 echo "Sourcing deploy script '$TYPE'"
 . "$DIR/deploy/$TYPE.sh"
 
+# Update deployment information
+$SSH_CONN \
+    "echo $BUILD_ID > $DEST_PATH/.active-build"
+
+# Reduce settings file permissions
+if [ "$BOOTSTRAP" -eq "0" ]
+    then
+        $SSH_CONN \
+            "sudo chmod 640 $WEBROOT_SETTINGS"
+fi
+
+# SCP dump from destination
+echo "SCP $SRC_DUMP_FILE"
+echo "<-- $DEST_DUMP_FILE "
+scp -i $DEST_IDENTITY \
+    $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
+    $SRC_DUMP_FILE
+
+if [ "$?" -eq "0" ]
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+fi
+
+# Trim old builds, leaving current and previous successful build
+echo -n "Trim deployed builds... "
+if [ "$LAST_BUILD_ID" != "0" ]
+    then
+        $SSH_CONN \
+            "cd $DEST_BUILDS_PATH && ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" -e \"$LAST_BUILD_ID\" | cut -f2 -d: | xargs sudo rm -rf"
+    else
+        $SSH_CONN \
+            "cd $DEST_BUILDS_PATH && ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" | cut -f2 -d: | xargs sudo rm -rf"
+fi
+
+echo "OK"
+
+# Trim old local backups, keep last two
+echo -n "Trim local backups... "
+SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
+SRC_LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
+cd $SRC_DUMP_PATH && ls $SRC_DUMP_PATH | head -2 | grep -v -e "$SRC_LAST_DUMP_NAME" | cut -f2 -d: | xargs rm -rf
+
+echo "OK"
+
+# Trim old remote backups, keep last five
+echo -n "Trim remote backups... "
+DEST_LAST_DUMP_NAME=`$SSH_CONN "ls -t $DEST_DUMP_PATH | head -1"`
+$SSH_CONN \
+    "cd $DEST_DUMP_PATH && ls $DEST_DUMP_PATH | head -5 | grep -v -e \"$DEST_LAST_DUMP_NAME\" | cut -f2 -d: | xargs rm -rf"
+
+echo "OK"
+
 echo "-----------------------------------------------"
-echo "FAILED";
-exit 1;
+echo "SUCCESS"
+exit 0

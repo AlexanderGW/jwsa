@@ -11,6 +11,19 @@ The `deploy-test` project template is based on a Composer Drupal <https://github
 ### Script limitations
 These scripts expect a partial pre-exisiting environment setup (databases, and populated `.env` files).
 
+### Caveat
+Completely removing a Composer CMS dependency (such as a Drupal module) will require an initial deployment 
+to disable and remove the module in config, before removing the dependency codebase. Otherwise you remove the code, before formally uninstalling it from Drupal.
+
+A solution to this, would be to create a module to handle 'releases'.
+
+```
+function HOOK_update_8001(&$sandbox) {
+  // Perform data removal and uninstall tasks here...
+  \Drupal::service('module_installer')->uninstall(['mymodule']);
+}
+```
+
 ### Pipeline example
 Example of the build and deploy scripts, used in Jenkins pipeline steps.
 

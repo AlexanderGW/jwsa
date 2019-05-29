@@ -13,13 +13,13 @@ These scripts expect a partial pre-exisiting environment setup (databases, and p
 
 ### Caveat
 Completely removing a Composer CMS dependency (such as a Drupal module) will require an initial deployment 
-to disable and remove the module in config, before removing the dependency codebase. Otherwise you remove the code, before formally uninstalling it from Drupal.
+to disable and remove the module in config, before removing the dependency codebase. Otherwise you remove the code, before formally uninstalling it within Drupal.
 
 A solution to this, would be to create a module to handle 'releases'.
 
 ```
 function HOOK_update_8001(&$sandbox) {
-  // Perform data removal and uninstall tasks here...
+  // Perform data handling and uninstall tasks here...
   \Drupal::service('module_installer')->uninstall(['mymodule']);
 }
 ```

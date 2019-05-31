@@ -113,9 +113,8 @@ EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi`
 
 if [ "$EXISTS" != "1" ]
 	then
-		$SSH_CONN \
-			"echo -n \"Creating source dump path '$SRC_DUMP_PATH'... \" \
-			&& mkdir -m 750 -p $SRC_DUMP_PATH"
+		echo -n "Creating source dump path '$SRC_DUMP_PATH'... " \
+			&& mkdir -m 770 -p $SRC_DUMP_PATH
 
 		if [ "$?" -eq "0" ]
 			then

@@ -100,8 +100,9 @@ if [ "$?" -eq "0" ]
                     then
 
                         # Import the copied dump
-                        echo -n "Import dump to destination $DEST_DUMP_FILE ... " \
-                            && mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE
+                        $SSH_CONN \
+                        	"echo -n \"Import dump to destination $DEST_DUMP_FILE ... \" \
+                            && mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
 
                         if [ "$?" -eq "0" ]
                             then

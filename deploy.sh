@@ -233,6 +233,11 @@ EXISTS=`$SSH_CONN \
 
 if [ "$EXISTS" != "1" ]
     then
+
+    	# Get hash salt from .env
+    	HASH_SALT=$(grep HASH_SALT $ENV_FILE | xargs)
+		HASH_SALT=${HASH_SALT#*=}
+
         $SSH_CONN \
             "echo -n \"Creating .env template... \" \
             && touch $DEST_PATH/.env \
@@ -242,7 +247,7 @@ MYSQL_PASSWORD=\\\"123\\\"\\n\
 MYSQL_PORT=3306\\n\
 MYSQL_USER=\\\"dbuser\\\"\\n\
 \\n\
-HASH_SALT=\\\"\\\"\\n\
+HASH_SALT=\\\"$HASH_SALT\\\"\\n\
 \\n\
 APP_ENV=\\\"$JOB_ENV\\\"\\n\
 \\n\

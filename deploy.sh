@@ -235,8 +235,7 @@ if [ "$EXISTS" != "1" ]
     then
 
     	# Get hash salt from .env
-    	HASH_SALT=$(grep HASH_SALT $ENV_FILE | xargs)
-		HASH_SALT=${HASH_SALT#*=}
+    	HASH_SALT=$(grep HASH_SALT $ENV_FILE | cut -d '=' -f2)
 
         $SSH_CONN \
             "echo -n \"Creating .env template... \" \

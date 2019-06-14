@@ -41,12 +41,12 @@ DEST_WEB_USER='www-data';
 SRC_DATABASE_NAME=$PROJECT_NAME;
 DEST_DATABASE_NAME=$PROJECT_NAME;
 
-# Webroot locations for build symlinks
-WEBROOT="/var/www/$PROJECT_NAME"
-WEBROOT_ASSETS="$WEBROOT/web/sites/default/files"
+# DEST_WEBROOT_PATH locations for build symlinks
+DEST_WEBROOT_PATH="/var/www/$PROJECT_NAME"
+DEST_DEST_WEBROOT_PATH_ASSET_PATH="$DEST_WEBROOT_PATH/web/sites/default/files"
 
 # Settings location
-WEBROOT_SETTINGS="$WEBROOT/web/sites/default/settings.php"
+DEST_DEST_WEBROOT_PATH_SETTINGS_PATH="$DEST_WEBROOT_PATH/web/sites/default/settings.php"
 
 # CLI tool (Drush, WP-CLI)
 CLI_PHAR="vendor/bin/drush"

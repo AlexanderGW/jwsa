@@ -227,16 +227,15 @@ fi
 
 echo ""
 
+# Get hash salt from .env
+HASH_SALT=$(grep HASH_SALT $ENV_FILE | cut -d '=' -f2)
+
 # Create .env template
-EXISTS=`$SSH_CONN \
+ENV_EXISTS=`$SSH_CONN \
     "if test -f $DEST_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
 
-if [ "$EXISTS" != "1" ]
+if [ "$ENV_EXISTS" != "1" ]
     then
-
-    	# Get hash salt from .env
-    	HASH_SALT=$(grep HASH_SALT $ENV_FILE | cut -d '=' -f2)
-
         $SSH_CONN \
             "echo -n \"Creating .env template... \" \
             && touch $DEST_PATH/.env \
@@ -273,7 +272,7 @@ $SSH_CONN \
 if [ "$BOOTSTRAP" -eq "0" ]
     then
         $SSH_CONN \
-            "sudo chmod 640 $WEBROOT_SETTINGS"
+            "sudo chmod 640 $DEST_DEST_WEBROOT_PATH_SETTINGS_PATH"
 fi
 
 # SCP dump from destination

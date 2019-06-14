@@ -41,7 +41,7 @@ fi
 # Check current Drupal environment status
 echo -n "Drupal bootstrap... "
 $SSH_CONN \
-	"cd $WEBROOT && $CLI_PHAR status bootstrap | grep -q Successful"
+	"cd $DEST_WEBROOT_PATH && $CLI_PHAR status bootstrap | grep -q Successful"
 BOOTSTRAP=$?
 
 if [ "$BOOTSTRAP" -eq "0" ]
@@ -71,21 +71,41 @@ if [ "$?" -eq "0" ]
     then
 		echo ""
 
-        # Set maintenance mode, and dump a copy of the database.
+        # If environment is bootstrapped...
         if [ "$BOOTSTRAP" -eq "0" ]
         	then
-        		$SSH_CONN \
-					"echo \"Enable maintenance mode... OK\" \
-					&& cd $WEBROOT && $CLI_PHAR sset system.maintenance_mode TRUE \
-					&& echo -n \"Dump database... \" \
-					&& mysqldump $DEST_DATABASE_NAME > $DEST_DUMP_FILE"
+        		if [ "$JOB_ENV" == "prod" ]
+        			then
 
-				if [ "$?" -eq "0" ]
-					then
-						echo "OK"
+        				# Set read-only mode
+        				$SSH_CONN \
+							"echo -n \"Enable read-only mode... \" \
+							&& cd $DEST_WEBROOT_PATH && $CLI_PHAR vset site_readonly 1"
+
+						if [ "$?" -eq "0" ]
+							then
+								echo "OK"
+							else
+								echo "FAILED"
+								exit 1
+						fi
 					else
-						echo "FAILED"
-						exit 1
+
+						# Set maintenance mode, and dump a copy of the database.
+						$SSH_CONN \
+							"echo \"Enable maintenance mode...\" \
+							&& cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE \
+							&& echo \"OK\" \
+							&& echo -n \"Dump database... \" \
+							&& mysqldump $DEST_DATABASE_NAME > $DEST_DUMP_FILE"
+
+						if [ "$?" -eq "0" ]
+							then
+								echo "OK"
+							else
+								echo "FAILED"
+								exit 1
+						fi
 				fi
 			else
 
@@ -126,101 +146,127 @@ if [ "$?" -eq "0" ]
                 fi
 		fi
 
-        # Set .env to new build
+		if [ "$JOB_ENV" == "prod" ]
+			then
+
+				# Copy .env to new build. It will be updated with new database details and copied back, and linked.
+				$SSH_CONN \
+					"echo -n \"Copy .env to build... \" \
+					&& cp $DEST_PATH/.env $DEST_BUILD_PATH/.env"
+
+				if [ "$?" -eq "0" ]
+					then
+						echo "OK"
+					else
+						echo "FAILED"
+						exit 1
+				fi
+			else
+
+				# Link .env to build
+				$SSH_CONN \
+					"echo -n \"Link .env to build... \" \
+					&& sudo ln -snf $DEST_PATH/.env $DEST_BUILD_PATH/.env"
+
+				if [ "$?" -eq "0" ]
+					then
+						echo "OK"
+					else
+						echo "FAILED"
+						exit 1
+				fi
+		fi
+
+
+
+
+
+		# Set ownership on build
 		$SSH_CONN \
-			"echo -n \"Set .env for build... \" \
-			&& sudo ln -snf $DEST_PATH/.env $DEST_BUILD_PATH/.env"
+			"echo -n \"Set ownership & permissions for build... \" \
+			&& sudo chown $DEST_WEB_USER:$DEST_WEB_USER -R $DEST_BUILD_PATH \
+			&& sudo chmod 664 $DEST_DEST_WEBROOT_PATH_SETTINGS_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
 				echo "OK"
 
-				# Set webroot symlinks
-				$SSH_CONN \
-					"echo -n \"Set links for build... \" \
-					&& sudo ln -sfn $DEST_BUILD_PATH $WEBROOT \
-					&& sudo ln -sfn $DEST_ASSET_PATH $WEBROOT_ASSETS"
+				# Restart specified services
+				for SERVICE in ${DEST_SERVICES[@]}
+				do
+					$SSH_CONN \
+						"echo \"Restart service '$SERVICE'...\" \
+						&& sudo service $SERVICE restart"
 
-				if [ "$?" -eq "0" ]
+					if [ "$?" -eq "0" ]
+						then
+							echo "OK"
+						else
+							echo "FAILED"
+					fi
+				done
+
+				echo ""
+
+				# Rebuild cache
+				$SSH_CONN \
+					"echo \"Rebuild Drupal cache...\" \
+					&& cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
+
+				# Drupal bootstrapped?
+				if [ "$BOOTSTRAP" -eq "0" ]
 					then
 						echo "OK"
+						echo ""
 
-						# Set ownership on build
+						# Update database
 						$SSH_CONN \
-							"echo -n \"Set ownership & permissions for build... \" \
-							&& sudo chown $DEST_WEB_USER:$DEST_WEB_USER -R $DEST_BUILD_PATH \
-							&& sudo chmod 664 $WEBROOT_SETTINGS"
+							"echo \"Apply Drupal database updates...\" \
+							&& cd $DEST_BUILD_PATH && $CLI_PHAR -y updatedb"
 
 						if [ "$?" -eq "0" ]
 							then
 								echo "OK"
-
-								# Restart specified services
-								for SERVICE in ${DEST_SERVICES[@]}
-								do
-									$SSH_CONN \
-										"echo \"Restart service '$SERVICE'...\" \
-										&& sudo service $SERVICE restart"
-
-									if [ "$?" -eq "0" ]
-										then
-											echo "OK"
-										else
-											echo "FAILED"
-									fi
-								done
-
 								echo ""
 
-								# Rebuild cache
+								# Update configuration
 								$SSH_CONN \
-									"echo \"Rebuild Drupal cache...\" \
-									&& cd $WEBROOT && $CLI_PHAR -y cache-rebuild > /dev/null"
+									"echo \"Import Drupal configuration...\" \
+									&& cd $DEST_BUILD_PATH && $CLI_PHAR -y config-import"
 
-								# Drupal bootstrapped?
-								if [ "$BOOTSTRAP" -eq "0" ]
+								if [ "$?" -eq "0" ]
 									then
 										echo "OK"
 										echo ""
 
-										# Update database
+										# Switch webroot symlinks to the new build
 										$SSH_CONN \
-											"echo \"Apply Drupal database updates...\" \
-											&& cd $WEBROOT && $CLI_PHAR -y updatedb"
+											"echo -n \"Set links for build... \" \
+											&& sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
+											&& sudo ln -sfn $DEST_ASSET_PATH $DEST_DEST_WEBROOT_PATH_ASSET_PATH"
 
 										if [ "$?" -eq "0" ]
 											then
 												echo "OK"
-												echo ""
+											else
+												echo "FAILED"
+												exit 1
+										fi
 
-												# Update configuration
+										if [ "$JOB_ENV" == "prod" ]
+											then
+
+												# Disable read-only mode, and rebuild cache.
 												$SSH_CONN \
-													"echo \"Import Drupal configuration...\" \
-													&& cd $WEBROOT && $CLI_PHAR -y config-import"
+													"echo -n \"Disable read-only mode... \" \
+													&& cd $DEST_BUILD_PATH && $CLI_PHAR vset site_readonly 0 \
+													&& echo \"OK\" \
+													&& echo \"Rebuild Drupal cache... \" \
+													&& cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
 
 												if [ "$?" -eq "0" ]
 													then
 														echo "OK"
-														echo ""
-
-														# Disable maintenance mode, and rebuild cache.
-														$SSH_CONN \
-															"echo \"Disable maintenance mode... OK\" \
-															&& cd $WEBROOT && $CLI_PHAR sset system.maintenance_mode FALSE \
-															&& echo \"Rebuild Drupal cache... \" \
-															&& cd $WEBROOT && $CLI_PHAR -y cache-rebuild > /dev/null"
-
-														if [ "$?" -eq "0" ]
-															then
-																echo "OK"
-															else
-																echo "FAILED"
-
-																if [ "$BOOTSTRAP" -eq "0" ]
-																	then
-																		REVERT=1
-																fi
-														fi
 													else
 														echo "FAILED"
 
@@ -229,17 +275,37 @@ if [ "$?" -eq "0" ]
 																REVERT=1
 														fi
 												fi
-
-												echo ""
 											else
-												echo "FAILED"
 
-												if [ "$BOOTSTRAP" -eq "0" ]
+												# Disable maintenance mode, and rebuild cache.
+												$SSH_CONN \
+													"echo \"Disable maintenance mode... OK\" \
+													&& cd $DEST_BUILD_PATH && $CLI_PHAR sset system.maintenance_mode FALSE \
+													&& echo \"Rebuild Drupal cache... \" \
+													&& cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
+
+												if [ "$?" -eq "0" ]
 													then
-														REVERT=1
+														echo "OK"
+													else
+														echo "FAILED"
+
+														if [ "$BOOTSTRAP" -eq "0" ]
+															then
+																REVERT=1
+														fi
 												fi
 										fi
+									else
+										echo "FAILED"
+
+										if [ "$BOOTSTRAP" -eq "0" ]
+											then
+												REVERT=1
+										fi
 								fi
+
+								echo ""
 							else
 								echo "FAILED"
 
@@ -248,13 +314,14 @@ if [ "$?" -eq "0" ]
 										REVERT=1
 								fi
 						fi
-					else
-						echo "FAILED"
-						exit 1
 				fi
 			else
 				echo "FAILED"
-				exit 1
+
+				if [ "$BOOTSTRAP" -eq "0" ]
+					then
+						REVERT=1
+				fi
 		fi
 
 		# Revert environment to previous build
@@ -281,10 +348,10 @@ if [ "$?" -eq "0" ]
 
 				echo ""
 
-				# Create project webroot symlink to last successful job build
+				# Set webroot symlink to last successful build
 				$SSH_CONN \
 					"echo -n \"Set symlinks for previous build... \" \
-					&& sudo ln -sfn $DEST_BUILDS_PATH/$LAST_BUILD_ID $WEBROOT"
+					&& sudo ln -sfn $DEST_BUILDS_PATH/$LAST_BUILD_ID $DEST_WEBROOT_PATH"
 
 				if [ "$?" -eq "0" ]
 					then
@@ -295,16 +362,33 @@ if [ "$?" -eq "0" ]
 
 				echo ""
 
-				# Disable maintenance mode
-				$SSH_CONN \
-					"echo -n \"Disable maintenance mode... \" \
-					&& cd $WEBROOT && $CLI_PHAR sset system.maintenance_mode FALSE > /dev/null"
-
-				if [ "$?" -eq "0" ]
+				if [ "$JOB_ENV" == "prod" ]
 					then
-						echo "OK"
+
+						# Disable read-only mode.
+						$SSH_CONN \
+							"echo -n \"Disable read-only mode... \" \
+							&& cd $DEST_BUILDS_PATH/$LAST_BUILD_ID && $CLI_PHAR vset site_readonly 0"
+
+						if [ "$?" -eq "0" ]
+							then
+								echo "OK"
+							else
+								echo "FAILED"
+						fi
 					else
-						echo "FAILED"
+
+						# Disable maintenance mode.
+						$SSH_CONN \
+							"echo -n \"Disable maintenance mode... \" \
+							&& cd $DEST_BUILDS_PATH/$LAST_BUILD_ID && $CLI_PHAR sset system.maintenance_mode FALSE > /dev/null"
+
+						if [ "$?" -eq "0" ]
+							then
+								echo "OK"
+							else
+								echo "FAILED"
+						fi
 				fi
 
 				echo ""
@@ -329,7 +413,7 @@ if [ "$?" -eq "0" ]
 				# Rebuild cache
 				$SSH_CONN \
 					"echo -n \"Rebuild Drupal cache... \" \
-					&& cd $WEBROOT && $CLI_PHAR -y cache-rebuild > /dev/null"
+					&& cd $DEST_BUILDS_PATH/$LAST_BUILD_ID && $CLI_PHAR -y cache-rebuild > /dev/null"
 
 				if [ "$?" -eq "0" ]
 					then

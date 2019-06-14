@@ -5,7 +5,7 @@ REVERT=0
 # Check current Drupal environment status
 echo "Drupal bootstrap..."
 $SSH_CONN \
-	"$CLI_PHAR --root=$WEBROOT status bootstrap | grep -q Successful"
+	"$CLI_PHAR --root=$DEST_WEBROOT_PATH status bootstrap | grep -q Successful"
 BOOTSTRAP=$?
 
 if [ "$BOOTSTRAP" -eq "0" ]

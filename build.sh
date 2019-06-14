@@ -58,8 +58,8 @@ if [ -z ${TYPE+x} ];
 		echo "OK"
 fi
 
-# Override the webroot with the Jenkins workspace
-WEBROOT=$WORKSPACE_PATH
+# Override the DEST_WEBROOT_PATH with the Jenkins workspace
+DEST_WEBROOT_PATH=$WORKSPACE_PATH
 
 # Environment we are building (dev, stage, prod, etc.)
 JOB_ENV=`echo $1 | cut -d'-' -f2`

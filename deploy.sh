@@ -35,6 +35,14 @@ if ! [[ "$3" =~ ^[0-9]+$ ]]
 fi
 BUILD_ID=$3
 
+# $4 = ENV_FILE
+if ! [ -e "$4" ]
+    then
+        echo "Invalid ENV_FILE"
+        exit 1
+fi
+ENV_FILE=$4
+
 # Date string for database dump suffix
 DATE=`date +%Y%m%d-%H%M%S`
 
@@ -58,6 +66,7 @@ if [ -z ${TYPE+x} ];
 fi
 
 JOB_ENV=`echo $1 | cut -d'-' -f2`
+JOB_ENV='prod'
 
 echo "Deploy '$PROJECT_NAME' (build: $BUILD_ID)"
 echo "--------------------------------------------------------------------------------"
@@ -69,10 +78,20 @@ declare -a WEBSERVER_CONF_DIRS=("sites-available" "conf.d")
 LAST_BUILD_ID=`curl --user vagrant:vagrant http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber`
 #LAST_BUILD_ID=`wget -qO- http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber --user=\\\"vagrant:vagrant\\\"`
 
+# Get destination database current name
+if [ "$LAST_BUILD_ID" != "0" ]
+    then
+        DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}__${LAST_BUILD_ID}"
+    else
+        DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
+fi
+
 # Database locations
 SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
 SRC_DUMP_FILE="$SRC_DUMP_PATH/$PROJECT_NAME-predeploy-$BUILD_ID.sql"
 DEST_DUMP_FILE="$DEST_DUMP_PATH/$PROJECT_NAME-predeploy-$BUILD_ID.sql"
+
+DESTINATION_DATABASE_DUMPED=0
 
 # Test SSH connect
 echo -n "Test SSH connection... "
@@ -166,7 +185,7 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 				for DIR_NAME in ${WEBSERVER_CONF_DIRS[@]}
 					do
 						$SSH_CONN \
-							"sudo ls -l /etc/$SERVICE_NAME/$DIR_NAME"
+							"sudo ls -l /etc/$SERVICE_NAME/$DIR_NAME > /dev/null"
 
 						if [ "$?" -eq "0" ]
 							then
@@ -180,7 +199,7 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 
 								if [ "$?" -eq "0" ]
 									then
-										echo "OK"
+#										echo "OK"
 										UPDATED=1
 
 										# Create enabled site symlink if required
@@ -194,8 +213,8 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 														break
 												fi
 										fi
-									else
-										echo "FAILED"
+#									else
+#										echo "FAILED"
 								fi
 
 								echo ""
@@ -239,18 +258,18 @@ if [ "$ENV_EXISTS" != "1" ]
         $SSH_CONN \
             "echo -n \"Creating .env template... \" \
             && touch $DEST_PATH/.env \
-            && echo -e \"MYSQL_DATABASE=\\\"$DEST_DATABASE_NAME\\\"\\n\
-MYSQL_HOSTNAME=\\\"localhost\\\"\\n\
-MYSQL_PASSWORD=\\\"123\\\"\\n\
+            && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_CURRENT_NAME\\n\
+MYSQL_HOSTNAME=localhost\\n\
+MYSQL_PASSWORD=123\\n\
 MYSQL_PORT=3306\\n\
-MYSQL_USER=\\\"dbuser\\\"\\n\
+MYSQL_USER=$PROJECT_NAME\\n\
 \\n\
-HASH_SALT=\\\"$HASH_SALT\\\"\\n\
+HASH_SALT=$HASH_SALT\\n\
 \\n\
-APP_ENV=\\\"$JOB_ENV\\\"\\n\
+APP_ENV=$JOB_ENV\\n\
 \\n\
-PRIVATE_PATH=\\\"$DEST_PRIVATE_PATH\\\"\\n\
-TWIG_PHP_STORAGE_PATH=\\\"$DEST_PRIVATE_PATH/php\\\"\" > $DEST_PATH/.env"
+PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
+TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_PATH/.env"
 
         if [ "$?" -eq "0" ]
             then
@@ -272,21 +291,46 @@ $SSH_CONN \
 if [ "$BOOTSTRAP" -eq "0" ]
     then
         $SSH_CONN \
-            "sudo chmod 640 $DEST_DEST_WEBROOT_PATH_SETTINGS_PATH"
+            "sudo chmod 640 $DEST_BUILD_SETTINGS_PATH"
+fi
+
+
+
+
+
+
+
+# Dump a copy of the database.
+if [ "$DESTINATION_DATABASE_DUMPED" -eq "0" ]
+    then
+        $SSH_CONN \
+            "echo -n \"Dump destination database... \" \
+            && mysqldump $DEST_DATABASE_CURRENT_NAME > $DEST_DUMP_FILE"
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+                DESTINATION_DATABASE_DUMPED=1
+            else
+                echo "FAILED"
+        fi
 fi
 
 # SCP dump from destination
-echo "SCP $SRC_DUMP_FILE"
-echo "<-- $DEST_DUMP_FILE "
-scp -i $DEST_IDENTITY \
-    $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
-    $SRC_DUMP_FILE
-
-if [ "$?" -eq "0" ]
+if [ "$DESTINATION_DATABASE_DUMPED" -eq "1" ]
     then
-        echo "OK"
-    else
-        echo "FAILED"
+        echo "SCP destination database to local '$SRC_DUMP_FILE'"
+        echo "<-- $DEST_DUMP_FILE "
+        scp -i $DEST_IDENTITY \
+            $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
+            $SRC_DUMP_FILE
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+        fi
 fi
 
 # Trim old builds, leaving current and previous successful build
@@ -306,7 +350,7 @@ echo "OK"
 echo -n "Trim local backups... "
 SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
 SRC_LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
-cd $SRC_DUMP_PATH && ls $SRC_DUMP_PATH | head -2 | grep -v -e "$SRC_LAST_DUMP_NAME" | cut -f2 -d: | xargs rm -rf
+cd $SRC_DUMP_PATH && ls $SRC_DUMP_PATH | head -3 | grep -v -e "$SRC_LAST_DUMP_NAME" | cut -f2 -d: | xargs rm -rf
 
 echo "OK"
 

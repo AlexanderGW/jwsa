@@ -150,9 +150,16 @@ if [ "$?" -eq "0" ]
 	then
 		echo "OK"
 
+        # Get destination database name
+		DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
+		if [ "$?" -eq "0" ]
+		    then
+				DEST_DATABASE_NAME=$PROJECT_NAME
+        fi
+
 		# Sync database from the destination env, to the workspace env
 		$SSH_CONN \
-			"echo -n \"Dump environment database... \" \
+			"echo -n \"Dump environment database '$DEST_DATABASE_NAME'... \" \
 			&& mysqldump $DEST_DATABASE_NAME > $DEST_DUMP_FILE"
 
 		if [ "$?" -eq "0" ]

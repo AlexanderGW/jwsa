@@ -66,7 +66,6 @@ if [ -z ${TYPE+x} ];
 fi
 
 JOB_ENV=`echo $1 | cut -d'-' -f2`
-JOB_ENV='prod'
 
 echo "Deploy '$PROJECT_NAME' (build: $BUILD_ID)"
 echo "--------------------------------------------------------------------------------"

@@ -1,5 +1,11 @@
 #! /bin/bash
 
+echo ""
+echo "--------------------------------------------------------------------------------"
+echo "Deploy '$PROJECT_NAME' (build: $BUILD_ID) - Platform 'Drupal 8'"
+echo "--------------------------------------------------------------------------------"
+echo ""
+
 REVERT=0
 
 # Create storage directory
@@ -138,7 +144,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
                     "echo \"Enable maintenance mode...\" \
                     && cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE \
                     && echo \"OK\" \
-                    && echo -n \"Dump database... \" \
+                    && echo -n \"Dump database '$DEST_DATABASE_CURRENT_NAME'... \" \
                     && mysqldump $DEST_DATABASE_CURRENT_NAME > $DEST_DUMP_FILE"
 
                 if [ "$?" -eq "0" ]
@@ -147,6 +153,24 @@ if [ "$BOOTSTRAP" -eq "0" ]
                         DESTINATION_DATABASE_DUMPED=1
                     else
                         echo "FAILED"
+
+                        # Set maintenance mode, and dump a copy of the database.
+                        $SSH_CONN \
+                            "echo \"Enable maintenance mode...\" \
+                            && cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE \
+                            && echo \"OK\" \
+                            && echo -n \"Dump database '$PROJECT_NAME'... \" \
+                            && mysqldump $PROJECT_NAME > $DEST_DUMP_FILE"
+
+                        if [ "$?" -eq "0" ]
+                            then
+                                echo "OK"
+                                DESTINATION_DATABASE_DUMPED=1
+                            else
+                                echo "FAILED"
+                                exit 1
+                        fi
+
                         exit 1
                 fi
         fi

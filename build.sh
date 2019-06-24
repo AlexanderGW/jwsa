@@ -1,9 +1,18 @@
 #!/bin/bash
 
-# ----------------------------------------
-# JENKINS DEPLOYMENT SCRIPT FOR PANLOGIC
-# WRITTEN BY: ALEXANDER GAILEY-WHITE
-# ----------------------------------------
+echo ""
+echo "  888888 888       888  .d8888b.         d8888"
+echo "    \"88b 888   o   888 d88P  Y88b       d88888"
+echo "     888 888  d8b  888 Y88b.           d88P888"
+echo "     888 888 d888b 888  \"Y888b.       d88P 888"
+echo "     888 888d88888b888     \"Y88b.    d88P  888"
+echo "     888 88888P Y88888       \"888   d88P   888"
+echo "     88P 8888P   Y8888 Y88b  d88P  d8888888888"
+echo "     888 888P     Y888  \"Y8888P\"  d88P     888"
+echo "   .d88P"
+echo " .d88P\"    Jenkins Web Scripts by Alex [1.0.0]"
+echo "888P\"      https://github.com/AlexanderGW/jwsa"
+echo ""
 
 if [ $# -lt 2 ]
   then
@@ -35,6 +44,11 @@ if ! [ -e "$3" ]
 fi
 ENV_FILE=$3
 
+echo "--------------------------------------------------------------------------------"
+echo "Build '$PROJECT_NAME'"
+echo "--------------------------------------------------------------------------------"
+echo ""
+
 # Date string for database dump suffix
 DATE=`date +%Y%m%d-%H%M%S`
 
@@ -63,9 +77,6 @@ DEST_WEBROOT_PATH=$WORKSPACE_PATH
 
 # Environment we are building (dev, stage, prod, etc.)
 JOB_ENV=`echo $1 | cut -d'-' -f2`
-
-echo "Build '$PROJECT_NAME'"
-echo "--------------------------------------------------------------------------------"
 
 IMPORT=0
 
@@ -243,6 +254,9 @@ if [ "$?" -eq "0" ]
 		echo "FAILED"
 fi
 
+echo ""
 echo "--------------------------------------------------------------------------------"
 echo "FAILED";
+echo "--------------------------------------------------------------------------------"
+echo ""
 exit 1;

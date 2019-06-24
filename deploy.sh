@@ -1,9 +1,18 @@
 #!/bin/bash
 
-# ----------------------------------------
-# JENKINS DEPLOYMENT SCRIPT FOR PANLOGIC
-# WRITTEN BY: ALEXANDER GAILEY-WHITE
-# ----------------------------------------
+echo ""
+echo "  888888 888       888  .d8888b.         d8888"
+echo "    \"88b 888   o   888 d88P  Y88b       d88888"
+echo "     888 888  d8b  888 Y88b.           d88P888"
+echo "     888 888 d888b 888  \"Y888b.       d88P 888"
+echo "     888 888d88888b888     \"Y88b.    d88P  888"
+echo "     888 88888P Y88888       \"888   d88P   888"
+echo "     88P 8888P   Y8888 Y88b  d88P  d8888888888"
+echo "     888 888P     Y888  \"Y8888P\"  d88P     888"
+echo "   .d88P"
+echo " .d88P\"    Jenkins Web Scripts by Alex [1.0.0]"
+echo "888P\"      https://github.com/AlexanderGW/jwsa"
+echo ""
 
 if [ $# -lt 3 ]
   then
@@ -43,6 +52,11 @@ if ! [ -e "$4" ]
 fi
 ENV_FILE=$4
 
+echo "--------------------------------------------------------------------------------"
+echo "Deploy '$PROJECT_NAME' (build: $BUILD_ID)"
+echo "--------------------------------------------------------------------------------"
+echo ""
+
 # Date string for database dump suffix
 DATE=`date +%Y%m%d-%H%M%S`
 
@@ -66,9 +80,6 @@ if [ -z ${TYPE+x} ];
 fi
 
 JOB_ENV=`echo $1 | cut -d'-' -f2`
-
-echo "Deploy '$PROJECT_NAME' (build: $BUILD_ID)"
-echo "--------------------------------------------------------------------------------"
 
 declare -a WEBSERVERS=("apache" "httpd" "nginx")
 declare -a WEBSERVER_CONF_DIRS=("sites-available" "conf.d")
@@ -360,7 +371,9 @@ $SSH_CONN \
     "cd $DEST_DUMP_PATH && ls $DEST_DUMP_PATH | head -5 | grep -v -e \"$DEST_LAST_DUMP_NAME\" | cut -f2 -d: | xargs rm -rf"
 
 echo "OK"
-
+echo ""
 echo "--------------------------------------------------------------------------------"
 echo "SUCCESS"
+echo "--------------------------------------------------------------------------------"
+echo ""
 exit 0

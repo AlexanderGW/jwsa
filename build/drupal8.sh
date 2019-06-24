@@ -1,5 +1,11 @@
 #! /bin/bash
 
+echo ""
+echo "--------------------------------------------------------------------------------"
+echo "Build '$PROJECT_NAME' - Platform 'Drupal 8'"
+echo "--------------------------------------------------------------------------------"
+echo ""
+
 # Check current Drupal environment status
 echo "Drupal bootstrap... "
 cd $WORKSPACE_PATH && $CLI_PHAR status bootstrap | grep -q Successful

@@ -90,7 +90,6 @@ if [ "$JOB_ENV" == "prod" ]
         DEST_DATABASE_NAME="${PROJECT_NAME}__${BUILD_ID}"
 
         # Destination database password
-        PASSWD='123'
 #        PASSWD=`openssl rand -base64 24`
 
         # Database & user creation queries
@@ -209,7 +208,7 @@ if [ "$JOB_ENV" == "prod" ]
             "echo -n \"Set .env for build... \" \
             && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
 MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
-MYSQL_PASSWORD=$PASSWD\\n\
+MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
 MYSQL_PORT=3306\\n\
 MYSQL_USER=$PROJECT_NAME\\n\
 \\n\

@@ -89,11 +89,12 @@ LAST_BUILD_ID=`curl --user vagrant:vagrant http://jenkins.test:8080/job/$1/lastS
 #LAST_BUILD_ID=`wget -qO- http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber --user=\\\"vagrant:vagrant\\\"`
 
 # Get destination database current name
-if [ "$LAST_BUILD_ID" != "0" ]
+if [ "$JOB_ENV" == "prod" ] && [ "$LAST_BUILD_ID" != "0" ]
     then
         DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}__${LAST_BUILD_ID}"
     else
-        DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
+        DEST_DATABASE_CURRENT_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
+#        DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
 fi
 
 # Database locations

@@ -170,8 +170,6 @@ if [ "$BOOTSTRAP" -eq "0" ]
                                 echo "FAILED"
                                 exit 1
                         fi
-
-                        exit 1
                 fi
         fi
     else

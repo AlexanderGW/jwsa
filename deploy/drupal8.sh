@@ -86,11 +86,12 @@ fi
 #            $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
 #            $SRC_DUMP_FILE
 
+DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
+DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`
+
 # Setup database & user for new build
 if [ "$JOB_ENV" == "prod" ]
     then
-        DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
-        DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`
 
         # Setup database and user permissions for build
         DEST_DATABASE_NAME="${PROJECT_NAME}__${BUILD_ID}"
@@ -114,6 +115,8 @@ if [ "$JOB_ENV" == "prod" ]
                 echo "FAILED"
                 exit 1
         fi
+    else
+        DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
 fi
 
 # If environment is bootstrapped...

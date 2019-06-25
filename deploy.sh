@@ -379,6 +379,34 @@ if [ "$DESTINATION_DATABASE_DUMPED" -eq "1" ]
         fi
 fi
 
+# Trim old destination databases
+if [ "$JOB_ENV" == "prod" ] && [ "$LAST_BUILD_ID" != "0" ]
+    then
+        RESULT=`$SSH_CONN \
+            "ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" -e \"$LAST_BUILD_ID\" | cut -f2 -d:"`
+    else
+        RESULT=`$SSH_CONN \
+            "ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" | cut -f2 -d:"`
+fi
+
+for ID in ${RESULT[@]}
+    do
+        ID_CLEAN="${ID%/}"
+        NAME="${PROJECT_NAME}__${ID_CLEAN}"
+        Q1="DROP DATABASE \\\`$NAME\\\`;"
+
+        $SSH_CONN \
+            "echo -n \"Remove old destination database '$NAME'... \" \
+            && mysql -e \"$Q1\""
+
+        if [ "$?" == "0" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+        fi
+done
+
 # Trim old builds, leaving current and previous successful build
 echo -n "Trim deployed builds... "
 if [ "$LAST_BUILD_ID" != "0" ]

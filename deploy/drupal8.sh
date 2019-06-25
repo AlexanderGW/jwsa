@@ -56,12 +56,12 @@ if [ "$BOOTSTRAP" -eq "0" ] && [ "$LAST_BUILD_ID" != "0" ]
         echo "OK"
 
         # Make a copy of current build into the new build on dest, to ease diff sync
-		echo "COPY destination build $DEST_BUILDS_PATH/$LAST_BUILD_ID"
+		echo "COPY last successful build $DEST_BUILDS_PATH/$LAST_BUILD_ID"
         echo "--> $DEST_BUILD_PATH"
         $SSH_CONN \
             "cp -R $DEST_BUILDS_PATH/$LAST_BUILD_ID/* $DEST_BUILD_PATH"
 
-        echo "RSYNC build $WORKSPACE_PATH"
+        echo "RSYNC new build difference $WORKSPACE_PATH"
         echo "--> $DEST_BUILD_PATH"
         rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" \
             $WORKSPACE_PATH/* \
@@ -141,7 +141,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
                 # Set maintenance mode, and dump a copy of the database.
                 $SSH_CONN \
-                    "echo \"Enable maintenance mode...\" \
+                    "echo -n \"Enable maintenance mode...\" \
                     && cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE \
                     && echo \"OK\" \
                     && echo -n \"Dump database '$DEST_DATABASE_CURRENT_NAME'... \" \
@@ -156,7 +156,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
                         # Set maintenance mode, and dump a copy of the database.
                         $SSH_CONN \
-                            "echo \"Enable maintenance mode...\" \
+                            "echo -n \"Enable maintenance mode...\" \
                             && cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE \
                             && echo \"OK\" \
                             && echo -n \"Dump database '$PROJECT_NAME'... \" \

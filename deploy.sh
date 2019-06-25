@@ -89,7 +89,7 @@ LAST_BUILD_ID=`curl --user vagrant:vagrant http://jenkins.test:8080/job/$1/lastS
 #LAST_BUILD_ID=`wget -qO- http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber --user=\\\"vagrant:vagrant\\\"`
 
 # Get destination database current name
-echo -N "Locate current database... "
+echo -n "Locate current database... "
 DEST_DATABASE_NAME_MATCH=0
 if [ "$JOB_ENV" == "prod" ] && [ "$LAST_BUILD_ID" != "0" ]
     then

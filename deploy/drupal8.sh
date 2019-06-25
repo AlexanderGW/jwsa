@@ -253,10 +253,36 @@ TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
                 fi
         fi
     else
+        $SSH_CONN \
+            "echo -n \"Update .env for project... \" \
+            && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
+MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
+MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
+MYSQL_PORT=3306\\n\
+MYSQL_USER=$PROJECT_NAME\\n\
+\\n\
+HASH_SALT=$HASH_SALT\\n\
+\\n\
+APP_ENV=$JOB_ENV\\n\
+\\n\
+PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
+TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_PATH/.env"
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+
+                if [ "$BOOTSTRAP" -eq "0" ]
+                    then
+                        REVERT=1
+                fi
+        fi
 
         # Link .env to build
         $SSH_CONN \
-            "echo -n \"Link .env to build... \" \
+            "echo -n \"Link project .env to build... \" \
             && sudo ln -snf $DEST_PATH/.env $DEST_BUILD_PATH/.env"
 
         if [ "$?" -eq "0" ]
@@ -354,7 +380,7 @@ if [ "$?" -eq "0" ]
                                                 if [ "$JOB_ENV" == "prod" ]
                                                     then
                                                         $SSH_CONN \
-                                                            "echo -n \"Link .env to build... \" \
+                                                            "echo -n \"Link project .env to build... \" \
                                                             && cp $DEST_BUILD_PATH/.env $DEST_PATH/.env \
                                                             && rm -rf $DEST_BUILD_PATH/.env \
                                                             && sudo ln -snf $DEST_PATH/.env $DEST_BUILD_PATH/.env"

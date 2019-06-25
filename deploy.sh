@@ -89,12 +89,47 @@ LAST_BUILD_ID=`curl --user vagrant:vagrant http://jenkins.test:8080/job/$1/lastS
 #LAST_BUILD_ID=`wget -qO- http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber --user=\\\"vagrant:vagrant\\\"`
 
 # Get destination database current name
+echo -N "Locate current database... "
+DEST_DATABASE_NAME_MATCH=0
 if [ "$JOB_ENV" == "prod" ] && [ "$LAST_BUILD_ID" != "0" ]
     then
         DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}__${LAST_BUILD_ID}"
-    else
+        RESULT=`$SSH_CONN "mysqlshow $DEST_DATABASE_CURRENT_NAME | grep -v Wildcard | grep -o $DEST_DATABASE_CURRENT_NAME"`
+        if [ "$RESULT" == "$DEST_DATABASE_CURRENT_NAME" ]
+            then
+                echo "OK [$DEST_DATABASE_CURRENT_NAME]"
+                DEST_DATABASE_NAME_MATCH=1
+        fi
+fi
+
+if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]
+    then
         DEST_DATABASE_CURRENT_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
-#        DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
+        RESULT=`$SSH_CONN "mysqlshow $DEST_DATABASE_CURRENT_NAME | grep -v Wildcard | grep -o $DEST_DATABASE_CURRENT_NAME"`
+        if [ "$RESULT" == "$DEST_DATABASE_CURRENT_NAME" ]
+            then
+                echo "OK [$DEST_DATABASE_CURRENT_NAME]"
+                DEST_DATABASE_NAME_MATCH=1
+        fi
+fi
+
+if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]
+    then
+        DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
+        RESULT=`$SSH_CONN "mysqlshow $DEST_DATABASE_CURRENT_NAME | grep -v Wildcard | grep -o $DEST_DATABASE_CURRENT_NAME"`
+        if [ "$RESULT" == "$DEST_DATABASE_CURRENT_NAME" ]
+            then
+                echo "OK [$DEST_DATABASE_CURRENT_NAME]"
+                DEST_DATABASE_NAME_MATCH=1
+        fi
+fi
+
+if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]
+    then
+        echo "--------------------------------------------------------------------------------"
+        echo "FAILED: Cannot locate active destination database"
+        echo "--------------------------------------------------------------------------------"
+        exit 1
 fi
 
 # Database locations

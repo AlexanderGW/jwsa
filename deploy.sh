@@ -380,13 +380,13 @@ if [ "$DESTINATION_DATABASE_DUMPED" -eq "1" ]
 fi
 
 # Trim old destination databases
-if [ "$JOB_ENV" == "prod" ] && [ "$LAST_BUILD_ID" != "0" ]
+if [ "$LAST_BUILD_ID" != "0" ]
     then
         RESULT=`$SSH_CONN \
-            "ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" -e \"$LAST_BUILD_ID\" | cut -f2 -d:"`
+            "ls $DEST_BUILDS_PATH | grep -v -e \"$PROJECT_NAME\" -e \"$BUILD_ID\" -e \"$LAST_BUILD_ID\" | cut -f2 -d:"`
     else
         RESULT=`$SSH_CONN \
-            "ls $DEST_BUILDS_PATH | grep -v -e \"$BUILD_ID\" | cut -f2 -d:"`
+            "ls $DEST_BUILDS_PATH | grep -v -e \"$PROJECT_NAME\"-e \"$BUILD_ID\"  | cut -f2 -d:"`
 fi
 
 for ID in ${RESULT[@]}

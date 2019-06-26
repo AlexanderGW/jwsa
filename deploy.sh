@@ -170,24 +170,6 @@ if [ "$?" -eq "0" ]
 		fi
 fi
 
-# Create dump directory
-#EXISTS=`$SSH_CONN \
-#	"if test -d $DEST_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi"`
-#
-#if [ "$EXISTS" != "1" ]
-#	then
-#		$SSH_CONN \
-#			"echo -n \"Creating dump path '$DEST_DUMP_PATH'... \" \
-#			&& sudo install -d -m 0700 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_DUMP_PATH"
-#
-#		if [ "$?" -eq "0" ]
-#			then
-#				echo "OK"
-#			else
-#				echo "FAILED"
-#		fi
-#fi
-
 # Create assets directory
 EXISTS=`$SSH_CONN \
 	"if test -d $DEST_ASSET_PATH; then echo \"1\"; else echo \"0\"; fi"`
@@ -272,14 +254,14 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 echo "OK"
 echo ""
 
-# Restart specified services
+# Reload specified services
 if [ "$UPDATED" == "1" ];
 	then
-		for SERVICE in ${DEST_SERVICES[@]}
+		for SERVICE in ${DEST_SERVICES_RELOAD[@]}
 		do
 			$SSH_CONN \
-				"echo \"Restart service '$SERVICE'...\" \
-				&& sudo service $SERVICE restart"
+				"echo \"Reload service '$SERVICE'...\" \
+				&& sudo service $SERVICE reload"
 
 			if [ "$?" -eq "0" ]
 				then
@@ -297,13 +279,13 @@ HASH_SALT=$(grep HASH_SALT $ENV_FILE | cut -d '=' -f2)
 
 # Create .env template
 ENV_EXISTS=`$SSH_CONN \
-    "if test -f $DEST_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
+    "if test -f $DEST_BUILD_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
 
 if [ "$ENV_EXISTS" != "1" ]
     then
         $SSH_CONN \
             "echo -n \"Creating .env template... \" \
-            && touch $DEST_PATH/.env \
+            && touch $DEST_BUILD_PATH/.env \
             && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_CURRENT_NAME\\n\
 MYSQL_HOSTNAME=localhost\\n\
 MYSQL_PASSWORD=123\\n\
@@ -315,7 +297,7 @@ HASH_SALT=$HASH_SALT\\n\
 APP_ENV=$JOB_ENV\\n\
 \\n\
 PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
-TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_PATH/.env"
+TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
 
         if [ "$?" -eq "0" ]
             then
@@ -386,24 +368,31 @@ if [ "$LAST_BUILD_ID" != "0" ]
             "ls $DEST_BUILDS_PATH | grep -v -e \"$PROJECT_NAME\" -e \"$BUILD_ID\" -e \"$LAST_BUILD_ID\" | cut -f2 -d:"`
     else
         RESULT=`$SSH_CONN \
-            "ls $DEST_BUILDS_PATH | grep -v -e \"$PROJECT_NAME\"-e \"$BUILD_ID\"  | cut -f2 -d:"`
+            "ls $DEST_BUILDS_PATH | grep -v -e \"$PROJECT_NAME\" -e \"$BUILD_ID\"  | cut -f2 -d:"`
 fi
+
+# TODO: ADD DB DELETE EXCEPTION FOR $PROJECT_NAME AND $DEST_DATABASE_NAME
 
 for ID in ${RESULT[@]}
     do
         ID_CLEAN="${ID%/}"
         NAME="${PROJECT_NAME}__${ID_CLEAN}"
-        Q1="DROP DATABASE \\\`$NAME\\\`;"
 
-        $SSH_CONN \
-            "echo -n \"Remove old destination database '$NAME'... \" \
-            && mysql -e \"$Q1\""
-
-        if [ "$?" == "0" ]
+        # Do not delete the current database
+        if [ ! "$NAME" == "$PROJECT_NAME" ] && [ ! "$NAME" == "$DEST_DATABASE_CURRENT_NAME" ]
             then
-                echo "OK"
-            else
-                echo "FAILED"
+                Q1="DROP DATABASE \\\`$NAME\\\`;"
+
+                $SSH_CONN \
+                    "echo -n \"Remove old destination database '$NAME'... \" \
+                    && mysql -e \"$Q1\""
+
+                if [ "$?" == "0" ]
+                    then
+                        echo "OK"
+                    else
+                        echo "FAILED"
+                fi
         fi
 done
 

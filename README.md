@@ -8,15 +8,24 @@ The `deploy-test` project template is based on a Composer Drupal <https://github
 
 <https://gailey-white.com/jenkins-web-scripts-by-alex>
 
-### Script limitations
-##### Environment
+### Script requirements
+
+#### Environment
+
+Specify the `$LAST_BUILD_ID` with a curl/wget, for the last successful build ID. This value is used to optimise the script steps, and database names for 'prod' (production) suffixed projects.
+
+#### Libraries
+
+mysql-client, openssh, rsync, scp, curl/wget
+
+#### Project environments
 These scripts expect a partial pre-exisiting environment setup.
 
 The scripts will fall-back to sourcing the database on local or destination, named `$PROJECT_NAME`
 
 The .env files will be generated based on the information available at the time. Some values will default  to `$PROJECT_NAME`
 
-##### Rsync
+#### Rsync
 The rsync command for webserver configs, requires `sudo` access. Add the following to `sudo visudo` to allow this.
 
 ```

@@ -59,6 +59,9 @@ if [[ ! -d "$DIR" ]];
 		DIR="$PWD";
 fi
 
+# Load .env file
+. "$DIR/.env"
+
 # Source the projects deployment variables
 echo -n "Sourcing project script '$PROJECT_NAME'... "
 echo $DIR/project/$PROJECT_NAME/variables.sh

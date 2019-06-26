@@ -81,12 +81,11 @@ fi
 
 JOB_ENV=`echo $1 | cut -d'-' -f2`
 
+# Load .env file
+. "$DIR/.env"
+
 declare -a WEBSERVERS=("apache" "httpd" "nginx")
 declare -a WEBSERVER_CONF_DIRS=("sites-available" "conf.d")
-
-# Get last successful build ID for the project
-LAST_BUILD_ID=`curl --user vagrant:vagrant http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber`
-#LAST_BUILD_ID=`wget -qO- http://jenkins.test:8080/job/$1/lastSuccessfulBuild/buildNumber --user=\\\"vagrant:vagrant\\\"`
 
 # Get destination database current name
 echo -n "Locate current database... "

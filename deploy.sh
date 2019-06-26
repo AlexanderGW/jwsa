@@ -112,15 +112,9 @@ if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]
         fi
 fi
 
-if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]
+if [ ! -z ${DEST_DATABASE_CURRENT_NAME+x} ];
     then
         DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
-        RESULT=`$SSH_CONN "mysqlshow $DEST_DATABASE_CURRENT_NAME | grep -v Wildcard | grep -o $DEST_DATABASE_CURRENT_NAME"`
-        if [ "$RESULT" == "$DEST_DATABASE_CURRENT_NAME" ]
-            then
-                echo "OK [$DEST_DATABASE_CURRENT_NAME]"
-                DEST_DATABASE_NAME_MATCH=1
-        fi
 fi
 
 if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]

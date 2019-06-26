@@ -316,7 +316,7 @@ if [ "$?" -eq "0" ]
                                         $SSH_CONN \
                                             "echo -n \"Set links for build... \" \
                                             && sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
-                                            && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASEETS_PATH"
+                                            && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
 
                                         if [ "$?" -eq "0" ]
                                             then
@@ -419,7 +419,7 @@ if [ "$?" -eq "0" ]
                 $SSH_CONN \
                     "echo -n \"Set links for build... \" \
                     && sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
-                    && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASEETS_PATH"
+                    && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
 
                 if [ "$?" -eq "0" ]
                     then

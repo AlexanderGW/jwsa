@@ -43,16 +43,18 @@ DEST_DATABASE_NAME=$PROJECT_NAME;
 
 # Webroot locations for build symlinks
 DEST_WEBROOT_PATH="/var/www/$PROJECT_NAME"
-DEST_BUILD_ASEETS_PATH="$DEST_WEBROOT_PATH/web/sites/default/files"
+DEST_BUILD_ASSETS_PATH="$DEST_BUILD_PATH/web/sites/default/files"
 
 # Settings location
-DEST_BUILD_SETTINGS_PATH="$DEST_WEBROOT_PATH/web/sites/default/settings.php"
+DEST_BUILD_SETTINGS_PATH="$DEST_BUILD_PATH/web/sites/default/settings.php"
 
 # CLI tool (Drush, WP-CLI)
 CLI_PHAR="vendor/bin/drush"
 
 # Services to restart
 declare -a DEST_SERVICES=("php-fpm" "nginx")
+declare -a DEST_SERVICES_RESTART=("php-fpm")
+declare -a DEST_SERVICES_RELOAD=("nginx")
 
 # Rsync flags and parameters
 # REMEMBER: Exclude .env, assets, cache, test, and tool directories to speed up transfers

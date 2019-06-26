@@ -87,7 +87,16 @@ fi
 #            $SRC_DUMP_FILE
 
 DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
+if [ ! -z ${DEST_DATABASE_HOSTNAME+x} ];
+    then
+        DEST_DATABASE_HOSTNAME="localhost"
+fi
+
 DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`
+if [ ! -z ${DEST_DATABASE_PASSWORD+x} ];
+    then
+        DEST_DATABASE_PASSWORD=""
+fi
 
 # Setup database & user for new build
 if [ "$JOB_ENV" == "prod" ]
@@ -97,7 +106,27 @@ if [ "$JOB_ENV" == "prod" ]
         DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
 fi
 
-# Database & user creation queries
+if [ ! -z ${DEST_DATABASE_NAME+x} ];
+    then
+        DEST_DATABASE_NAME="${PROJECT_NAME}"
+fi
+
+# Database user creation query
+Q1="CREATE USER IF NOT EXISTS \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+
+$SSH_CONN \
+    "echo -n \"Setup destination database user '$PROJECT_NAME' to '$DEST_DATABASE_HOSTNAME' for build... \" \
+    && mysql -e \"$Q1\""
+
+if [ "$?" -eq "0" ]
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+        exit 1
+fi
+
+# Database & user permission creation queries
 Q1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
 Q3="FLUSH PRIVILEGES;"
@@ -155,7 +184,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
         LOCAL_DATABASE_NAME=$(grep MYSQL_DATABASE $ENV_FILE | cut -d '=' -f2)
 
         # Dump local database
-        echo -n \"Dump local database '$LOCAL_DATABASE_NAME'... \" \
+        echo -n "Dump local database '$LOCAL_DATABASE_NAME'... " \
         && mysqldump $LOCAL_DATABASE_NAME > $SRC_DUMP_FILE
 
         if [ "$?" -eq "0" ]

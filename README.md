@@ -36,7 +36,7 @@ stage('Build') {
 
 stage("Deploy") {
 	steps {
-		sh "~/jwsa/deploy.sh ${env.JOB_NAME} ${env.WORKSPACE} ${env.BUILD_ID}"
+		sh "~/jwsa/deploy.sh ${env.JOB_NAME} ${env.WORKSPACE} ${env.BUILD_ID}  /path/to/project/envs/${env.JOB_NAME}/.env"
 	}
 }
 ```
@@ -52,7 +52,7 @@ stage("Deploy") {
 
 ### To deploy the workspace, to the environment.
 
-`/path/to/deploy.sh ${env.JOB_NAME} ${env.WORKSPACE} ${env.JOB_ID}`
+`/path/to/deploy.sh ${env.JOB_NAME} ${env.WORKSPACE} ${env.JOB_ID}  /path/to/project/envs/${env.JOB_NAME}/.env`
 
 - SSH connection test
 - Directory structure test

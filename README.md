@@ -9,11 +9,19 @@ The `deploy-test` project template is based on a Composer Drupal <https://github
 <https://gailey-white.com/jenkins-web-scripts-by-alex>
 
 ### Script limitations
+##### Environment
 These scripts expect a partial pre-exisiting environment setup.
 
 The scripts will fall-back to sourcing the database on local or destination, named `$PROJECT_NAME`
 
 The .env files will be generated based on the information available at the time. Some values will default  to `$PROJECT_NAME`
+
+##### Rsync
+The rsync command for webserver configs, requires `sudo` access. Add the following to `sudo visudo` to allow this.
+
+```
+<username> ALL=NOPASSWD:<path to rsync>
+```
 
 ### Caveat
 Completely removing a Composer CMS dependency (such as a Drupal module) will require an initial deployment 
@@ -110,10 +118,3 @@ Comming soon...
 
 #### WordPress module
 Comming soon...
-
-### Rsync
-The rsync command for webserver configs, requires `sudo` access. Add the following to `sudo visudo` to allow this.
-
-```
-<username> ALL=NOPASSWD:<path to rsync>
-```

@@ -9,7 +9,11 @@ The `deploy-test` project template is based on a Composer Drupal <https://github
 <https://gailey-white.com/jenkins-web-scripts-by-alex>
 
 ### Script limitations
-These scripts expect a partial pre-exisiting environment setup (databases, and populated `.env` files).
+These scripts expect a partial pre-exisiting environment setup.
+
+The scripts will fall-back to sourcing the database on local or destination, named `$PROJECT_NAME`
+
+The .env files will be generated based on the information available at the time. Some values will default  to `$PROJECT_NAME`
 
 ### Caveat
 Completely removing a Composer CMS dependency (such as a Drupal module) will require an initial deployment 

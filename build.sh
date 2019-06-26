@@ -128,7 +128,7 @@ EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi`
 if [ "$EXISTS" != "1" ]
 	then
 		echo -n "Creating source dump path '$SRC_DUMP_PATH'... " \
-			&& mkdir -m 770 -p $SRC_DUMP_PATH
+			&& sudo install -g $USER -o $USER -m 0770 -d $SRC_DUMP_PATH
 
 		if [ "$?" -eq "0" ]
 			then
@@ -146,7 +146,7 @@ if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
 			"echo -n \"Creating destination dump path '$DEST_DUMP_PATH'... \" \
-			&& mkdir -m 750 -p $DEST_DUMP_PATH"
+			&& sudo install -g $USER -o $USER -m 0750 -d $DEST_DUMP_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -157,7 +157,7 @@ if [ "$EXISTS" != "1" ]
 fi
 
 # Link .env to new build
-echo -n "Set .env for build... "
+echo -n "Set .env for workspace... "
 cd $WORKSPACE_PATH && ln -snf $ENV_FILE .env
 
 if [ "$?" -eq "0" ]

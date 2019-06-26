@@ -4,7 +4,7 @@ BASH scripts to running important Drush/WP-CLI commands for build, and deploymen
 
 Call these scripts from Declarative Pipelines steps, or as an executed shell script (if using the execute script method, the environment variables that you pass to the shell would be `${JOB_NAME}` instead of `${env.JOB_NAME}` used in Groovy pipelines)
 
-The `deploy-test` project template is based on a Composer Drupal <https://github.com/drupal-composer/drupal-project> PuPHPet <https://puphpet.com> Vagrant environment
+The `example-test` project template is based on a Composer Drupal <https://github.com/drupal-composer/drupal-project> PuPHPet <https://puphpet.com> Vagrant environment
 
 <https://gailey-white.com/jenkins-web-scripts-by-alex>
 
@@ -19,11 +19,9 @@ Specify the `$LAST_BUILD_ID` with a curl/wget, for the last successful build ID.
 mysql-client, openssh, rsync, scp, curl/wget
 
 #### Project environments
-These scripts expect a partial pre-exisiting environment setup.
+These scripts expect a database on either the local, or remote environment.
 
-The scripts will fall-back to sourcing the database on local or destination, named `$PROJECT_NAME`
-
-The .env files will be generated based on the information available at the time. Some values will default  to `$PROJECT_NAME`
+The `.env` files will be generated based on the information available at the time. Some values (such as database name) will default  to `$PROJECT_NAME`.
 
 #### Rsync
 The rsync command for webserver configs, requires `sudo` access. Add the following to `sudo visudo` to allow this.

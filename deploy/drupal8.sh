@@ -92,31 +92,26 @@ DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d 
 # Setup database & user for new build
 if [ "$JOB_ENV" == "prod" ]
     then
-
-        # Setup database and user permissions for build
         DEST_DATABASE_NAME="${PROJECT_NAME}__${BUILD_ID}"
-
-        # Destination database password
-#        PASSWD=`openssl rand -base64 24`
-
-        # Database & user creation queries
-        Q1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-        Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
-        Q3="FLUSH PRIVILEGES;"
-
-        $SSH_CONN \
-            "echo -n \"Setup destination database '$DEST_DATABASE_NAME' on '$DEST_DATABASE_HOSTNAME' for build... \" \
-            && mysql -e \"$Q1$Q2$Q3\""
-
-        if [ "$?" -eq "0" ]
-            then
-                echo "OK"
-            else
-                echo "FAILED"
-                exit 1
-        fi
     else
         DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
+fi
+
+# Database & user creation queries
+Q1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+Q3="FLUSH PRIVILEGES;"
+
+$SSH_CONN \
+    "echo -n \"Setup destination database '$DEST_DATABASE_NAME' on '$DEST_DATABASE_HOSTNAME' for build... \" \
+    && mysql -e \"$Q1$Q2$Q3\""
+
+if [ "$?" -eq "0" ]
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+        exit 1
 fi
 
 # If environment is bootstrapped...
@@ -154,25 +149,6 @@ if [ "$BOOTSTRAP" -eq "0" ]
                     then
                         echo "OK"
                         DESTINATION_DATABASE_DUMPED=1
-                    else
-                        echo "FAILED"
-
-                        # Set maintenance mode, and dump a copy of the database.
-                        $SSH_CONN \
-                            "echo -n \"Enable maintenance mode...\" \
-                            && cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE \
-                            && echo \"OK\" \
-                            && echo -n \"Dump database '$PROJECT_NAME'... \" \
-                            && mysqldump $PROJECT_NAME > $DEST_DUMP_FILE"
-
-                        if [ "$?" -eq "0" ]
-                            then
-                                echo "OK"
-                                DESTINATION_DATABASE_DUMPED=1
-                            else
-                                echo "FAILED"
-                                exit 1
-                        fi
                 fi
         fi
     else
@@ -198,7 +174,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
                         # Import the copied dump
                         $SSH_CONN \
-                            "echo -n \"Import dump to destination $DEST_DUMP_FILE ... \" \
+                            "echo -n \"Import dump on destination $DEST_DUMP_FILE ... \" \
                             && mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
 
                         if [ "$?" -eq "0" ]
@@ -227,11 +203,10 @@ if [ "$BOOTSTRAP" -eq "0" ]
         fi
 fi
 
-if [ "$JOB_ENV" == "prod" ]
-    then
-        $SSH_CONN \
-            "echo -n \"Set .env for build... \" \
-            && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
+# Write new build .env
+$SSH_CONN \
+    "echo -n \"Write .env for build... \" \
+    && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
 MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
 MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
 MYSQL_PORT=3306\\n\
@@ -244,56 +219,15 @@ APP_ENV=$JOB_ENV\\n\
 PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
 TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
 
-        if [ "$?" -eq "0" ]
-            then
-                echo "OK"
-            else
-                echo "FAILED"
-
-                if [ "$BOOTSTRAP" -eq "0" ]
-                    then
-                        REVERT=1
-                fi
-        fi
+if [ "$?" -eq "0" ]
+    then
+        echo "OK"
     else
-        $SSH_CONN \
-            "echo -n \"Update .env for project... \" \
-            && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
-MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
-MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
-MYSQL_PORT=3306\\n\
-MYSQL_USER=$PROJECT_NAME\\n\
-\\n\
-HASH_SALT=$HASH_SALT\\n\
-\\n\
-APP_ENV=$JOB_ENV\\n\
-\\n\
-PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
-TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_PATH/.env"
+        echo "FAILED"
 
-        if [ "$?" -eq "0" ]
+        if [ "$BOOTSTRAP" -eq "0" ]
             then
-                echo "OK"
-            else
-                echo "FAILED"
-
-                if [ "$BOOTSTRAP" -eq "0" ]
-                    then
-                        REVERT=1
-                fi
-        fi
-
-        # Link .env to build
-        $SSH_CONN \
-            "echo -n \"Link project .env to build... \" \
-            && sudo ln -snf $DEST_PATH/.env $DEST_BUILD_PATH/.env"
-
-        if [ "$?" -eq "0" ]
-            then
-                echo "OK"
-            else
-                echo "FAILED"
-                exit 1
+                REVERT=1
         fi
 fi
 
@@ -308,11 +242,26 @@ if [ "$?" -eq "0" ]
         echo "OK"
 
         # Restart specified services
-        for SERVICE in ${DEST_SERVICES[@]}
+        for SERVICE in ${DEST_SERVICES_RESTART[@]}
         do
             $SSH_CONN \
                 "echo \"Restart service '$SERVICE'...\" \
                 && sudo service $SERVICE restart"
+
+            if [ "$?" -eq "0" ]
+                then
+                    echo "OK"
+                else
+                    echo "FAILED"
+            fi
+        done
+
+        # Reload specified services
+        for SERVICE in ${DEST_SERVICES_RELOAD[@]}
+        do
+            $SSH_CONN \
+                "echo \"Reload service '$SERVICE'...\" \
+                && sudo service $SERVICE reload"
 
             if [ "$?" -eq "0" ]
                 then
@@ -355,12 +304,6 @@ if [ "$?" -eq "0" ]
                                 echo "OK"
                                 echo ""
 
-                                # Disable maintenance mode, and rebuild cache.
-#                                $SSH_CONN \
-#                                    "echo \"Disable maintenance mode... OK\" \
-#                                    && cd $DEST_BUILD_PATH && $CLI_PHAR sset system.maintenance_mode FALSE \
-#                                    && echo \"Rebuild Drupal cache... \" \
-#                                    && cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
                                 $SSH_CONN \
                                     "echo \"Rebuild Drupal cache... \" \
                                     && cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
@@ -379,34 +322,12 @@ if [ "$?" -eq "0" ]
                                             then
                                                 echo "OK"
 
-                                                # Copy build .env to project root, link .env to build
-                                                if [ "$JOB_ENV" == "prod" ]
-                                                    then
-                                                        $SSH_CONN \
-                                                            "echo -n \"Link project .env to build... \" \
-                                                            && cp $DEST_BUILD_PATH/.env $DEST_PATH/.env \
-                                                            && rm -rf $DEST_BUILD_PATH/.env \
-                                                            && sudo ln -snf $DEST_PATH/.env $DEST_BUILD_PATH/.env"
-
-                                                        if [ "$?" -eq "0" ]
-                                                            then
-                                                                echo "OK"
-                                                            else
-                                                                echo "FAILED"
-
-                                                                if [ "$BOOTSTRAP" -eq "0" ]
-                                                                    then
-                                                                        REVERT=1
-                                                                fi
-                                                        fi
-                                                fi
-
                                                 # Restart specified services
-                                                for SERVICE in ${DEST_SERVICES[@]}
+                                                for SERVICE in ${DEST_SERVICES_RELOAD[@]}
                                                 do
                                                     $SSH_CONN \
-                                                        "echo \"Restart service '$SERVICE'...\" \
-                                                        && sudo service $SERVICE restart"
+                                                        "echo \"Reload service '$SERVICE'...\" \
+                                                        && sudo service $SERVICE reload"
 
                                                     if [ "$?" -eq "0" ]
                                                         then
@@ -448,6 +369,19 @@ if [ "$?" -eq "0" ]
                                                             else
                                                                 echo "FAILED"
                                                         fi
+                                                fi
+
+                                                # Link project .env to new build
+                                                $SSH_CONN \
+                                                    "echo -n \"Link project .env to build... \" \
+                                                    && rm -rf $DEST_PATH/.env \
+                                                    && sudo ln -snf $DEST_BUILD_PATH/.env $DEST_PATH/.env"
+
+                                                if [ "$?" -eq "0" ]
+                                                    then
+                                                        echo "OK"
+                                                    else
+                                                        echo "FAILED"
                                                 fi
                                             else
                                                 echo "FAILED"
@@ -492,11 +426,11 @@ if [ "$?" -eq "0" ]
                         echo "OK"
 
                         # Restart specified services
-                        for SERVICE in ${DEST_SERVICES[@]}
+                        for SERVICE in ${DEST_SERVICES_RELOAD[@]}
                         do
                             $SSH_CONN \
-                                "echo \"Restart service '$SERVICE'...\" \
-                                && sudo service $SERVICE restart"
+                                "echo \"Reload service '$SERVICE'...\" \
+                                && sudo service $SERVICE reload"
 
                             if [ "$?" -eq "0" ]
                                 then
@@ -588,11 +522,11 @@ if [ "$REVERT" -eq "1" ]
         echo ""
 
         # Restart specified services
-        for SERVICE in ${DEST_SERVICES[@]}
+        for SERVICE in ${DEST_SERVICES_RELOAD[@]}
         do
             $SSH_CONN \
-                "echo \"Restart service '$SERVICE'...\" \
-                && sudo service $SERVICE restart"
+                "echo \"Reload service '$SERVICE'...\" \
+                && sudo service $SERVICE reload"
 
             if [ "$?" -eq "0" ]
                 then

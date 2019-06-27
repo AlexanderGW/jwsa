@@ -115,6 +115,7 @@ fi
 if [ ! -z ${DEST_DATABASE_CURRENT_NAME+x} ];
     then
         DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
+        DEST_DATABASE_NAME_MATCH=1
 fi
 
 if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]

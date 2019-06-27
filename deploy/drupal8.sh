@@ -112,7 +112,7 @@ if [ ! -z ${DEST_DATABASE_NAME+x} ];
 fi
 
 # Database user creation query
-Q1="CREATE USER IF NOT EXISTS \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+Q1="CREATE USER \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
 
 $SSH_CONN \
     "echo -n \"Setup destination database user '$PROJECT_NAME' to '$DEST_DATABASE_HOSTNAME' for build... \" \
@@ -123,7 +123,6 @@ if [ "$?" -eq "0" ]
         echo "OK"
     else
         echo "FAILED"
-        exit 1
 fi
 
 # Database & user permission creation queries

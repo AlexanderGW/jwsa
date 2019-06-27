@@ -95,7 +95,7 @@ fi
 DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`
 if [ ! -z ${DEST_DATABASE_PASSWORD+x} ];
     then
-        DEST_DATABASE_PASSWORD=""
+        DEST_DATABASE_PASSWORD="change-this-password-$DATE"
 fi
 
 # Setup database & user for new build

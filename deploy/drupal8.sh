@@ -467,6 +467,19 @@ if [ "$?" -eq "0" ]
                                     echo "FAILED"
                             fi
                         done
+
+                        # Link project .env to new build
+                        $SSH_CONN \
+                            "echo -n \"Link project .env to build... \" \
+                            && rm -rf $DEST_PATH/.env \
+                            && sudo ln -snf $DEST_BUILD_PATH/.env $DEST_PATH/.env"
+
+                        if [ "$?" -eq "0" ]
+                            then
+                                echo "OK"
+                            else
+                                echo "FAILED"
+                        fi
                     else
                         echo "FAILED"
                 fi

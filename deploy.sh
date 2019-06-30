@@ -271,36 +271,6 @@ echo ""
 # Get hash salt from .env
 HASH_SALT=$(grep HASH_SALT $ENV_FILE | cut -d '=' -f2)
 
-# Create .env template
-ENV_EXISTS=`$SSH_CONN \
-    "if test -f $DEST_BUILD_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
-
-if [ "$ENV_EXISTS" != "1" ]
-    then
-        $SSH_CONN \
-            "echo -n \"Creating .env template... \" \
-            && touch $DEST_BUILD_PATH/.env \
-            && echo -e \"MYSQL_DATABASE=$DEST_DATABASE_CURRENT_NAME\\n\
-MYSQL_HOSTNAME=localhost\\n\
-MYSQL_PASSWORD=123\\n\
-MYSQL_PORT=3306\\n\
-MYSQL_USER=$PROJECT_NAME\\n\
-\\n\
-HASH_SALT=$HASH_SALT\\n\
-\\n\
-APP_ENV=$JOB_ENV\\n\
-\\n\
-PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
-TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
-
-        if [ "$?" -eq "0" ]
-            then
-                echo "OK"
-            else
-                echo "FAILED"
-        fi
-fi
-
 # Source the deploy script (drupal7, drupal8, wordpress, etc...)
 echo "Sourcing deploy script '$TYPE'"
 . "$DIR/deploy/$TYPE.sh"
@@ -315,12 +285,6 @@ if [ "$BOOTSTRAP" -eq "0" ]
         $SSH_CONN \
             "sudo chmod 640 $DEST_BUILD_SETTINGS_PATH"
 fi
-
-
-
-
-
-
 
 # Dump a copy of the database.
 if [ "$DESTINATION_DATABASE_DUMPED" -eq "0" ]

@@ -146,7 +146,7 @@ if [ "$EXISTS" != "1" ]
 	then
 		$SSH_CONN \
 			"echo -n \"Creating destination dump path '$DEST_DUMP_PATH'... \" \
-			&& sudo install -g $USER -o $USER -m 0750 -d $DEST_DUMP_PATH"
+			&& install -g $DEST_SSH_USER -o $DEST_SSH_USER -m 0750 -d $DEST_DUMP_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -166,9 +166,9 @@ if [ "$?" -eq "0" ]
 
         # Get destination database name
 		DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
-		if [ "$?" -eq "0" ]
-		    then
-				DEST_DATABASE_NAME=$PROJECT_NAME
+        if [ ! -z ${DEST_DATABASE_NAME+x} ];
+            then
+                DEST_DATABASE_NAME="${PROJECT_NAME}"
         fi
 
 		# Sync database from the destination env, to the workspace env
@@ -187,7 +187,7 @@ if [ "$?" -eq "0" ]
 
 				# Compare the new dump size, with the most recent project backup
 				# We are checking the file size, rather than the checksum.
-				# Due to the dump containing a creation timestamp
+				# Due to the dump containing a creation timestamp - this method isn't perfect, i.e. boolean changes are missed
 				if [ ! -z $SRC_LAST_DUMP_NAME ] && [ -f "$SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME" ];
 					then
 						A=`wc -c $SRC_DUMP_PATH/$SRC_LAST_DUMP_NAME | cut -d' ' -f1`
@@ -246,13 +246,24 @@ if [ "$?" -eq "0" ]
 							exit 1
 					fi
 				fi
-
-                # Source the deploy script (drupal7, drupal8, wordpress, etc...)
-                echo "Sourcing build script '$TYPE'"
-                . "$DIR/build/$TYPE.sh"
 			else
 				echo "FAILED"
+
+                # Use local database, if it exists
+                echo -n "Fall-back to local database... "
+                RESULT=`$SSH_CONN "mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
+                if [ "$RESULT" == "$SRC_DATABASE_NAME" ]
+                    then
+                        echo "OK"
+                    else
+                        echo "FAILED"
+                        exit 1
+                fi
 		fi
+
+		# Source the deploy script (drupal7, drupal8, wordpress, etc...)
+        echo "Sourcing build script '$TYPE'"
+        . "$DIR/build/$TYPE.sh"
 	else
 		echo "FAILED"
 fi

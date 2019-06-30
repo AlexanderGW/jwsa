@@ -80,22 +80,22 @@ if [ "$BOOTSTRAP" -eq "0" ] && [ "$LAST_BUILD_ID" != "0" ]
             $DEST_SSH_USER@$DEST_HOST:$DEST_BUILD_PATH
 fi
 
-#        echo "SCP $SRC_DUMP_FILE"
-#        echo "<-- $DEST_DUMP_FILE "
-#        scp -ri $DEST_IDENTITY \
-#            $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
-#            $SRC_DUMP_FILE
-
 DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
 if [ ! -z ${DEST_DATABASE_HOSTNAME+x} ];
     then
         DEST_DATABASE_HOSTNAME="localhost"
 fi
 
+DEST_DATABASE_USER=`$SSH_CONN "grep MYSQL_USER $DEST_PATH/.env | cut -d '=' -f2"`
+if [ ! -z ${DEST_DATABASE_USER+x} ];
+    then
+        DEST_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 32`
+fi
+
 DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`
 if [ ! -z ${DEST_DATABASE_PASSWORD+x} ];
     then
-        DEST_DATABASE_PASSWORD="change-this-password-$DATE"
+        DEST_DATABASE_PASSWORD=`date +%s | sha256sum | base64 | head -c 32`
 fi
 
 # Setup database & user for new build
@@ -112,10 +112,10 @@ if [ ! -z ${DEST_DATABASE_NAME+x} ];
 fi
 
 # Database user creation query
-Q1="CREATE USER \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+Q1="CREATE USER \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
 
 $SSH_CONN \
-    "echo -n \"Setup destination database user '$PROJECT_NAME' to '$DEST_DATABASE_HOSTNAME' for build... \" \
+    "echo -n \"Setup destination database user '$DEST_DATABASE_USER' to '$DEST_DATABASE_HOSTNAME' for build... \" \
     && mysql -e \"$Q1\""
 
 if [ "$?" -eq "0" ]
@@ -127,7 +127,7 @@ fi
 
 # Database & user permission creation queries
 Q1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$PROJECT_NAME\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
 Q3="FLUSH PRIVILEGES;"
 
 $SSH_CONN \
@@ -238,7 +238,7 @@ $SSH_CONN \
 MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
 MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
 MYSQL_PORT=3306\\n\
-MYSQL_USER=$PROJECT_NAME\\n\
+MYSQL_USER=$DEST_DATABASE_USER\\n\
 \\n\
 HASH_SALT=$HASH_SALT\\n\
 \\n\

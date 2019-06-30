@@ -164,6 +164,58 @@ if [ "$?" -eq "0" ]
 	then
 		echo "OK"
 
+        # Database crendentials
+        LOCAL_DATABASE_HOSTNAME=$(grep MYSQL_HOSTNAME $ENV_FILE | cut -d '=' -f2)
+        if [ ! -z ${LOCAL_DATABASE_HOSTNAME+x} ];
+            then
+                LOCAL_DATABASE_HOSTNAME='localhost'
+        fi
+
+        LOCAL_DATABASE_NAME=$(grep MYSQL_DATABASE $ENV_FILE | cut -d '=' -f2)
+        if [ ! -z ${LOCAL_DATABASE_NAME+x} ];
+            then
+                LOCAL_DATABASE_NAME="${PROJECT_NAME}"
+        fi
+
+        LOCAL_DATABASE_USER=$(grep MYSQL_USER $ENV_FILE | cut -d '=' -f2)
+        if [ ! -z ${LOCAL_DATABASE_USER+x} ];
+            then
+                LOCAL_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 32`
+        fi
+
+        LOCAL_DATABASE_PASSWORD=$(grep MYSQL_PASSWORD $ENV_FILE | cut -d '=' -f2)
+
+        # Database user creation query
+        Q1="CREATE USER \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
+
+        $SSH_CONN \
+            "echo -n \"Setup local database user '$LOCAL_DATABASE_USER' to '$LOCAL_DATABASE_HOSTNAME' for build... \" \
+            && mysql -e \"$Q1\""
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+        fi
+
+        # Database & user permission creation queries
+        Q1="CREATE DATABASE IF NOT EXISTS \\\`$LOCAL_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$LOCAL_DATABASE_NAME\\\`.* TO \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
+        Q3="FLUSH PRIVILEGES;"
+
+        $SSH_CONN \
+            "echo -n \"Setup local database '$LOCAL_DATABASE_NAME' on '$LOCAL_DATABASE_HOSTNAME' for build... \" \
+            && mysql -e \"$Q1$Q2$Q3\""
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+                exit 1
+        fi
+
         # Get destination database name
 		DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
         if [ ! -z ${DEST_DATABASE_NAME+x} ];

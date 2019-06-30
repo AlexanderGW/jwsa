@@ -182,6 +182,24 @@ if [ "$EXISTS" != "1" ]
 		fi
 fi
 
+# Create backup directory
+EXISTS=`$SSH_CONN \
+	"if test -d $DEST_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi"`
+
+if [ "$EXISTS" != "1" ]
+	then
+		$SSH_CONN \
+			"echo -n \"Creating backup path '$DEST_DUMP_PATH'... \" \
+			&& sudo install -d -m 0770 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_DUMP_PATH"
+
+		if [ "$?" -eq "0" ]
+			then
+				echo "OK"
+			else
+				echo "FAILED"
+		fi
+fi
+
 # Make build path
 $SSH_CONN \
 	"echo -n \"Creating build path '$DEST_BUILD_PATH'... \" \

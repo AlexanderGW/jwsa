@@ -174,7 +174,7 @@ fi
 DEST_DATABASE_USER=`$SSH_CONN "grep MYSQL_USER $DEST_PATH/.env | cut -d '=' -f2"`
 if [ ! -z ${DEST_DATABASE_USER+x} ];
     then
-        DEST_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 32`
+        DEST_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 16`
 fi
 
 DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`

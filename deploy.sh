@@ -164,6 +164,69 @@ if [ "$?" -eq "0" ]
 		fi
 fi
 
+# Establish destination database credentials
+DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
+if [ ! -z ${DEST_DATABASE_HOSTNAME+x} ];
+    then
+        DEST_DATABASE_HOSTNAME="localhost"
+fi
+
+DEST_DATABASE_USER=`$SSH_CONN "grep MYSQL_USER $DEST_PATH/.env | cut -d '=' -f2"`
+if [ ! -z ${DEST_DATABASE_USER+x} ];
+    then
+        DEST_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 32`
+fi
+
+DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`
+if [ ! -z ${DEST_DATABASE_PASSWORD+x} ];
+    then
+        DEST_DATABASE_PASSWORD=`date +%s | sha256sum | base64 | head -c 32`
+fi
+
+# Setup database & user for new build
+if [ "$JOB_ENV" == "prod" ]
+    then
+        DEST_DATABASE_NAME="${PROJECT_NAME}__${BUILD_ID}"
+    else
+        DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
+fi
+
+if [ ! -z ${DEST_DATABASE_NAME+x} ];
+    then
+        DEST_DATABASE_NAME="${PROJECT_NAME}"
+fi
+
+# Database user creation query
+Q1="CREATE USER \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+
+$SSH_CONN \
+    "echo -n \"Setup destination database user '$DEST_DATABASE_USER' to '$DEST_DATABASE_HOSTNAME' for build... \" \
+    && mysql -e \"$Q1\""
+
+if [ "$?" -eq "0" ]
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+fi
+
+# Database & user permission creation queries
+Q1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+Q3="FLUSH PRIVILEGES;"
+
+$SSH_CONN \
+    "echo -n \"Setup destination database '$DEST_DATABASE_NAME' on '$DEST_DATABASE_HOSTNAME' for build... \" \
+    && mysql -e \"$Q1$Q2$Q3\""
+
+if [ "$?" -eq "0" ]
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+        exit 1
+fi
+
 # Create assets directory
 EXISTS=`$SSH_CONN \
 	"if test -d $DEST_ASSET_PATH; then echo \"1\"; else echo \"0\"; fi"`

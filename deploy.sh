@@ -112,7 +112,7 @@ if [ "$DEST_DATABASE_NAME_MATCH" == "0" ]
         fi
 fi
 
-if [ ! -z ${DEST_DATABASE_CURRENT_NAME+x} ];
+if [ -z ${DEST_DATABASE_CURRENT_NAME+x} ];
     then
         DEST_DATABASE_CURRENT_NAME="${PROJECT_NAME}"
         DEST_DATABASE_NAME_MATCH=1
@@ -166,19 +166,19 @@ fi
 
 # Establish destination database credentials
 DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
-if [ ! -z ${DEST_DATABASE_HOSTNAME+x} ];
+if [ -z ${DEST_DATABASE_HOSTNAME+x} ];
     then
         DEST_DATABASE_HOSTNAME="localhost"
 fi
 
 DEST_DATABASE_USER=`$SSH_CONN "grep MYSQL_USER $DEST_PATH/.env | cut -d '=' -f2"`
-if [ ! -z ${DEST_DATABASE_USER+x} ];
+if [ -z ${DEST_DATABASE_USER+x} ];
     then
         DEST_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 16`
 fi
 
 DEST_DATABASE_PASSWORD=`$SSH_CONN "grep MYSQL_PASSWORD $DEST_PATH/.env | cut -d '=' -f2"`
-if [ ! -z ${DEST_DATABASE_PASSWORD+x} ];
+if [ -z ${DEST_DATABASE_PASSWORD+x} ];
     then
         DEST_DATABASE_PASSWORD=`date +%s | sha256sum | base64 | head -c 32`
 fi
@@ -191,7 +191,7 @@ if [ "$JOB_ENV" == "prod" ]
         DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
 fi
 
-if [ ! -z ${DEST_DATABASE_NAME+x} ];
+if [ -z ${DEST_DATABASE_NAME+x} ];
     then
         DEST_DATABASE_NAME="${PROJECT_NAME}"
 fi

@@ -166,19 +166,19 @@ if [ "$?" -eq "0" ]
 
         # Database crendentials
         LOCAL_DATABASE_HOSTNAME=$(grep MYSQL_HOSTNAME $ENV_FILE | cut -d '=' -f2)
-        if [ ! -z ${LOCAL_DATABASE_HOSTNAME+x} ];
+        if [ -z ${LOCAL_DATABASE_HOSTNAME+x} ];
             then
                 LOCAL_DATABASE_HOSTNAME='localhost'
         fi
 
         LOCAL_DATABASE_NAME=$(grep MYSQL_DATABASE $ENV_FILE | cut -d '=' -f2)
-        if [ ! -z ${LOCAL_DATABASE_NAME+x} ];
+        if [ -z ${LOCAL_DATABASE_NAME+x} ];
             then
                 LOCAL_DATABASE_NAME="${PROJECT_NAME}"
         fi
 
         LOCAL_DATABASE_USER=$(grep MYSQL_USER $ENV_FILE | cut -d '=' -f2)
-        if [ ! -z ${LOCAL_DATABASE_USER+x} ];
+        if [ -z ${LOCAL_DATABASE_USER+x} ];
             then
                 LOCAL_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 16`
         fi
@@ -218,7 +218,7 @@ if [ "$?" -eq "0" ]
 
         # Get destination database name
 		DEST_DATABASE_NAME=`$SSH_CONN "grep MYSQL_DATABASE $DEST_PATH/.env | cut -d '=' -f2"`
-        if [ ! -z ${DEST_DATABASE_NAME+x} ];
+        if [ -z ${DEST_DATABASE_NAME+x} ];
             then
                 DEST_DATABASE_NAME="${PROJECT_NAME}"
         fi

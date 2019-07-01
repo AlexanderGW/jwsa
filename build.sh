@@ -180,7 +180,7 @@ if [ "$?" -eq "0" ]
         LOCAL_DATABASE_USER=$(grep MYSQL_USER $ENV_FILE | cut -d '=' -f2)
         if [ ! -z ${LOCAL_DATABASE_USER+x} ];
             then
-                LOCAL_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 32`
+                LOCAL_DATABASE_USER=`date +%s | sha256sum | base64 | head -c 16`
         fi
 
         LOCAL_DATABASE_PASSWORD=$(grep MYSQL_PASSWORD $ENV_FILE | cut -d '=' -f2)

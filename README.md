@@ -76,18 +76,26 @@ stage("Deploy") {
 - SSH connection test
 - Directory structure test
 - Bootstrap test
-- Rsync build (Make a copy of previous build if bootstrap successful, to ease transfer time)
-- Enable maintenance mode
-- Backup database
-- Switch build symlinks
-- Run database routines
-- Disable maintenance
-- Clean up old builds
-- NOTE: Build will be reverted if any of the routines fail.
+- Rsync build (Make a copy of previous build if bootstrap successful, to ease transfer time on diff)
+- **Run platform routines (drupal8, etc)**
+	- **If running 'prod' environment routines**
+    	- Enable read-only mode
+    	- Copy database
+    	- Run database routines
+    	- Switch build symlinks
+    	- Disable read-only mode
+    - **Else, running default routines**
+    	- Enable maintenance mode
+    	- Backup database
+    	- Switch build symlinks
+    	- Run database routines
+    	- Disable maintenance
+- Clean up old builds, backups
+- **NOTE: Build will (in many cases) be reverted if any of the core routines fail.**
 
 ### Setting up a project
 
-The `~/project` directory is where `$PROJECT_NAME` directories are kept, holding variables, and optional web configs (named `$PROJECT_NAME`.conf, within their respective `$SERVICE` directories) for the build and deploy tasks.
+The `~/project` directory is where `$PROJECT_NAME` directories are kept, holding variables, optional web configs (named `$PROJECT_NAME`.conf, within their respective `$SERVICE` directories) for the build and deploy tasks, and backups synced from the destination.
 
 ### The .env template
 

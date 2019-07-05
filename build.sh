@@ -128,7 +128,7 @@ EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi`
 if [ "$EXISTS" != "1" ]
 	then
 		echo -n "Creating source dump path '$SRC_DUMP_PATH'... " \
-			&& sudo install -g $USER -o $USER -m 0770 -d $SRC_DUMP_PATH
+			&& install -m 0770 -d $SRC_DUMP_PATH
 
 		if [ "$?" -eq "0" ]
 			then
@@ -224,6 +224,7 @@ if [ "$?" -eq "0" ]
         fi
 
 		# Sync database from the destination env, to the workspace env
+		# TODO: Add a DATABASE_TABLE_NO_DATA array to skip cache_* and watchdog table data (speed up dump/import process)
 		$SSH_CONN \
 			"echo -n \"Dump environment database '$DEST_DATABASE_NAME'... \" \
 			&& mysqldump $DEST_DATABASE_NAME > $DEST_DUMP_FILE"

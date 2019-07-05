@@ -227,6 +227,13 @@ if [ "$?" -eq "0" ]
         exit 1
 fi
 
+# Ignored database table data
+IGNORED_TABLES_STRING=''
+for TABLE in "${DATABASE_TABLE_NO_DATA[@]}"
+do
+   IGNORED_TABLES_STRING+=" --ignore-table=${DEST_DATABASE_NAME}.${TABLE}"
+done
+
 # Create assets directory
 EXISTS=`$SSH_CONN \
 	"if test -d $DEST_ASSET_PATH; then echo \"1\"; else echo \"0\"; fi"`
@@ -370,14 +377,25 @@ fi
 # Dump a copy of the database.
 if [ "$DESTINATION_DATABASE_DUMPED" -eq "0" ]
     then
+        echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' structure... "
         $SSH_CONN \
-            "echo -n \"Dump destination database... \" \
-            && mysqldump $DEST_DATABASE_CURRENT_NAME > $DEST_DUMP_FILE"
+            "mysqldump $DEST_DATABASE_CURRENT_NAME --no-data --routines > $DEST_DUMP_FILE"
 
         if [ "$?" -eq "0" ]
             then
                 echo "OK"
-                DESTINATION_DATABASE_DUMPED=1
+
+                echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' data... "
+				$SSH_CONN \
+					"mysqldump $DEST_DATABASE_CURRENT_NAME --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
+
+				if [ "$?" -eq "0" ]
+					then
+						echo "OK"
+						DESTINATION_DATABASE_DUMPED=1
+					else
+						echo "FAILED"
+				fi
             else
                 echo "FAILED"
         fi

@@ -223,19 +223,41 @@ if [ "$?" -eq "0" ]
                 DEST_DATABASE_NAME="${PROJECT_NAME}"
         fi
 
+        # Ignored database table data
+		IGNORED_TABLES_STRING=''
+		for TABLE in "${DATABASE_TABLE_NO_DATA[@]}"
+		do
+		   IGNORED_TABLES_STRING+=" --ignore-table=${DEST_DATABASE_NAME}.${TABLE}"
+		done
+
 		# Sync database from the destination env, to the workspace env
-		# TODO: Add a DATABASE_TABLE_NO_DATA array to skip cache_* and watchdog table data (speed up dump/import process)
+		COMPARE=0
+		echo -n "Dump destination database '$DEST_DATABASE_NAME' structure... "
 		$SSH_CONN \
-			"echo -n \"Dump environment database '$DEST_DATABASE_NAME'... \" \
-			&& mysqldump $DEST_DATABASE_NAME > $DEST_DUMP_FILE"
+			"mysqldump $DEST_DATABASE_NAME --no-data --routines > $DEST_DUMP_FILE"
 
 		if [ "$?" -eq "0" ]
 			then
 				echo "OK"
 
+				echo -n "Dump destination database '$DEST_DATABASE_NAME' data... "
+				$SSH_CONN \
+					"mysqldump $DEST_DATABASE_NAME --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
+
+				if [ "$?" -eq "0" ]
+					then
+						echo "OK"
+						COMPARE=1
+					else
+						echo "FAILED"
+				fi
+		fi
+
+		if [ "$COMPARE" == "1" ]
+			then
 				echo -n "Compare dump... "
-                #mkdir -m 750 -p $SRC_DUMP_PATH
-                LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
+				#mkdir -m 750 -p $SRC_DUMP_PATH
+				LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
 				IMPORT=0
 
 				# Compare the new dump size, with the most recent project backup
@@ -259,45 +281,45 @@ if [ "$?" -eq "0" ]
 				fi
 
 				# Download the dump, and import it.
-                if [ "$IMPORT" == "1" ]
-                	then
+				if [ "$IMPORT" == "1" ]
+					then
 
-                	# SCP dump from destination
-					echo "SCP $SRC_DUMP_FILE"
-					echo "<-- $DEST_DUMP_FILE "
-					scp -i $DEST_IDENTITY \
-						$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
-						$SRC_DUMP_FILE
+						# SCP dump from destination
+						echo "SCP $SRC_DUMP_FILE"
+						echo "<-- $DEST_DUMP_FILE "
+						scp -i $DEST_IDENTITY \
+							$DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE \
+							$SRC_DUMP_FILE
 
-					if [ "$?" -eq "0" ]
-						then
+						if [ "$?" -eq "0" ]
+							then
 
-							# Import the copied dump
-							echo -n "Import dump to workspace $SRC_DUMP_FILE ... " \
-								&& mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
+								# Import the copied dump
+								echo -n "Import dump to workspace $SRC_DUMP_FILE ... " \
+									&& mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
 
-							if [ "$?" -eq "0" ]
-								then
-									echo "OK"
+								if [ "$?" -eq "0" ]
+									then
+										echo "OK"
 
-									# Delete the dump
-									echo -n "Clean up ... " \
-										&& rm -rf $SRC_DUMP_FILE
+										# Delete the dump
+										echo -n "Clean up ... " \
+											&& rm -rf $SRC_DUMP_FILE
 
-									if [ "$?" -eq "0" ]
-										then
-											echo "OK"
-										else
-											echo "FAILED"
-									fi
-								else
-									echo "FAILED"
-									exit 1
-							fi
-						else
-							echo "FAILED"
-							exit 1
-					fi
+										if [ "$?" -eq "0" ]
+											then
+												echo "OK"
+											else
+												echo "FAILED"
+										fi
+									else
+										echo "FAILED"
+										exit 1
+								fi
+							else
+								echo "FAILED"
+								exit 1
+						fi
 				fi
 			else
 				echo "FAILED"

@@ -56,6 +56,20 @@ declare -a DEST_SERVICES=("php-fpm" "nginx")
 declare -a DEST_SERVICES_RESTART=("php-fpm")
 declare -a DEST_SERVICES_RELOAD=("nginx")
 
+# Database table data to ignore
+declare -a DATABASE_TABLE_NO_DATA=(
+"cache",
+"cache_bootstrap"
+"cache_block"
+"cache_config"
+"cache_field"
+"cache_menu"
+"cache_tags"
+"cache_toolbar"
+"cache_views_info"
+"watchdog"
+)
+
 # Rsync flags and parameters
 # REMEMBER: Exclude .env, assets, cache, test, and tool directories to speed up transfers
 # MUST: Suffix with the with "-e" flag, to allow succeeding text to be executed remotely.

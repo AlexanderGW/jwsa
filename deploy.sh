@@ -470,7 +470,7 @@ echo "OK"
 echo -n "Trim local backups... "
 SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
 SRC_LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
-cd $SRC_DUMP_PATH && ls $SRC_DUMP_PATH | head -3 | grep -v -e "$SRC_LAST_DUMP_NAME" | cut -f2 -d: | xargs rm -rf
+cd $SRC_DUMP_PATH && ls $SRC_DUMP_PATH | grep -v -e "$SRC_LAST_DUMP_NAME" | head -2 | cut -f2 -d: | xargs rm -rf
 
 echo "OK"
 
@@ -478,7 +478,7 @@ echo "OK"
 echo -n "Trim remote backups... "
 DEST_LAST_DUMP_NAME=`$SSH_CONN "ls -t $DEST_DUMP_PATH | head -1"`
 $SSH_CONN \
-    "cd $DEST_DUMP_PATH && ls $DEST_DUMP_PATH | head -5 | grep -v -e \"$DEST_LAST_DUMP_NAME\" | cut -f2 -d: | xargs rm -rf"
+    "cd $DEST_DUMP_PATH && ls $DEST_DUMP_PATH | grep -v -e \"$DEST_LAST_DUMP_NAME\" | head -2 | cut -f2 -d: | xargs rm -rf"
 
 echo "OK"
 echo ""

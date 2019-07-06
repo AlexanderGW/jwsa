@@ -103,19 +103,40 @@ if [ "$BOOTSTRAP" -eq "0" ]
                 fi
             else
 
-                # Set maintenance mode, and dump a copy of the database.
+                # Set maintenance mode
                 $SSH_CONN \
                     "echo -n \"Enable maintenance mode...\" \
                     && cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE \
-                    && echo \"OK\" \
-                    && echo -n \"Dump database '$DEST_DATABASE_CURRENT_NAME'... \" \
-                    && mysqldump $DEST_DATABASE_CURRENT_NAME > $DEST_DUMP_FILE"
+                    && echo \"OK\""
 
                 if [ "$?" -eq "0" ]
                     then
                         echo "OK"
-                        DESTINATION_DATABASE_DUMPED=1
                 fi
+
+                echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' structure... "
+                $SSH_CONN \
+                    "mysqldump $DEST_DATABASE_CURRENT_NAME --no-data --routines > $DEST_DUMP_FILE"
+
+                if [ "$?" -eq "0" ]
+                    then
+                        echo "OK"
+
+                        echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' data... "
+                        $SSH_CONN \
+                            "mysqldump $DEST_DATABASE_CURRENT_NAME --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
+
+                        if [ "$?" -eq "0" ]
+                            then
+                                echo "OK"
+                                DESTINATION_DATABASE_DUMPED=1
+                            else
+                                echo "FAILED"
+                        fi
+                    else
+                        echo "FAILED"
+                fi
+
         fi
     else
         LOCAL_DATABASE_NAME=$(grep MYSQL_DATABASE $ENV_FILE | cut -d '=' -f2)

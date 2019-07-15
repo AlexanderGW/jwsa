@@ -50,7 +50,6 @@ $SSH_CONN \
 	"cd $DEST_WEBROOT_PATH && $CLI_PHAR status bootstrap | grep -q Successful > /dev/null"
 BOOTSTRAP=$?
 
-
 if [ "$BOOTSTRAP" -eq "0" ] && [ "$LAST_BUILD_ID" != "0" ]
     then
         echo "OK"
@@ -67,17 +66,19 @@ if [ "$BOOTSTRAP" -eq "0" ] && [ "$LAST_BUILD_ID" != "0" ]
             $WORKSPACE_PATH/* \
             $DEST_SSH_USER@$DEST_HOST:$DEST_BUILD_PATH
     else
+        echo "FAILED"
+
         # Send build to destination
-#        echo "SCP build $WORKSPACE_PATH"
-#        echo "--> $DEST_BUILD_PATH"
-#        scp -ri $DEST_IDENTITY \
-#            $WORKSPACE_PATH/* \
-#            $DEST_SSH_USER@$DEST_HOST:$DEST_BUILD_PATH
-        echo "RSYNC build $WORKSPACE_PATH"
+        echo "SCP build $WORKSPACE_PATH"
         echo "--> $DEST_BUILD_PATH"
-        rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" \
+        scp -ri $DEST_IDENTITY \
             $WORKSPACE_PATH/* \
             $DEST_SSH_USER@$DEST_HOST:$DEST_BUILD_PATH
+#        echo "RSYNC build $WORKSPACE_PATH"
+#        echo "--> $DEST_BUILD_PATH"
+#        rsync $RSYNC_FLAGS "ssh -i $DEST_IDENTITY" \
+#            $WORKSPACE_PATH/* \
+#            $DEST_SSH_USER@$DEST_HOST:$DEST_BUILD_PATH
 fi
 
 # If environment is bootstrapped...

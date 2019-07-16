@@ -70,6 +70,9 @@ declare -a DATABASE_TABLE_NO_DATA=(
 "watchdog"
 )
 
+# Use MySQL wildcard '%' for host
+#USE_MYSQL_HOST_WILDCARD=1
+
 # Rsync flags and parameters
 # REMEMBER: Exclude .env, assets, cache, test, and tool directories to speed up transfers
 # MUST: Suffix with the with "-e" flag, to allow succeeding text to be executed remotely.

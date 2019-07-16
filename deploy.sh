@@ -165,10 +165,15 @@ if [ "$?" -eq "0" ]
 fi
 
 # Establish destination database credentials
-DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
-if [ -z ${DEST_DATABASE_HOSTNAME+x} ];
+if [ -z ${USE_MYSQL_HOST_WILDCARD+x} ];
     then
-        DEST_DATABASE_HOSTNAME="localhost"
+		DEST_DATABASE_HOSTNAME=`$SSH_CONN "grep MYSQL_HOSTNAME $DEST_PATH/.env | cut -d '=' -f2"`
+		if [ -z ${DEST_DATABASE_HOSTNAME+x} ];
+			then
+				DEST_DATABASE_HOSTNAME="localhost"
+		fi
+	else
+		DEST_DATABASE_HOSTNAME="%"
 fi
 
 DEST_DATABASE_USER=`$SSH_CONN "grep MYSQL_USER $DEST_PATH/.env | cut -d '=' -f2"`

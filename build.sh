@@ -325,7 +325,7 @@ if [ "$?" -eq "0" ]
 				echo "FAILED"
 
                 # Use local database, if it exists
-                echo -n "Fall-back to local database... "
+                echo -n "Fall-back to local database '$SRC_DATABASE_NAME'... "
                 RESULT=`$SSH_CONN "mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
                 if [ "$RESULT" == "$SRC_DATABASE_NAME" ]
                     then

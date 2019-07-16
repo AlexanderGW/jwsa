@@ -301,7 +301,7 @@ if [ "$?" -eq "0" ]
 
                                         # Set webroot symlinks
                                         $SSH_CONN \
-                                            "echo -n \"Set links for build... \" \
+                                            "echo -n \"Set '$PROJECT_NAME' webroot to build ... \" \
                                             && sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
                                             && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
 
@@ -404,7 +404,7 @@ if [ "$?" -eq "0" ]
 
                 # Set webroot symlinks
                 $SSH_CONN \
-                    "echo -n \"Set links for build... \" \
+                    "echo -n \"Set '$PROJECT_NAME' webroot to build... \" \
                     && sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
                     && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
 
@@ -478,7 +478,7 @@ if [ "$REVERT" -eq "1" ]
 
         # Create project webroot symlink to last successful job build
         $SSH_CONN \
-            "echo -n \"Set symlinks for previous build... \" \
+            "echo -n \"Set '$PROJECT_NAME' webroot to previous build... \" \
             && sudo ln -sfn $DEST_BUILDS_PATH/$LAST_BUILD_ID $DEST_WEBROOT_PATH"
 
         if [ "$?" -eq "0" ]

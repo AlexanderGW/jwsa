@@ -200,13 +200,14 @@ if [ "$?" -eq "0" ]
         fi
 
         # Database & user permission creation queries
-        Q1="CREATE DATABASE IF NOT EXISTS \\\`$LOCAL_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-        Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$LOCAL_DATABASE_NAME\\\`.* TO \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
-        Q3="FLUSH PRIVILEGES;"
+        Q1="DROP DATABASE IF EXISTS \\\`$LOCAL_DATABASE_NAME\\\`;"
+        Q2="CREATE DATABASE IF NOT EXISTS \\\`$LOCAL_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        Q3="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$LOCAL_DATABASE_NAME\\\`.* TO \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
+        Q4="FLUSH PRIVILEGES;"
 
         $SSH_CONN \
             "echo -n \"Setup local database '$LOCAL_DATABASE_NAME' on '$LOCAL_DATABASE_HOSTNAME' for build... \" \
-            && mysql -e \"$Q1$Q2$Q3\""
+            && mysql -e \"$Q1$Q2$Q3$Q4\""
 
         if [ "$?" -eq "0" ]
             then

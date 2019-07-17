@@ -291,78 +291,41 @@ if [ "$?" -eq "0" ]
                                 echo "OK"
                                 echo ""
 
+                                # Set webroot symlinks
                                 $SSH_CONN \
-                                    "echo \"Rebuild Drupal cache... \" \
-                                    && cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
+                                    "echo -n \"Set '$PROJECT_NAME' webroot to build ... \" \
+                                    && sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
+                                    && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
 
                                 if [ "$?" -eq "0" ]
                                     then
                                         echo "OK"
 
-                                        # Set webroot symlinks
-                                        $SSH_CONN \
-                                            "echo -n \"Set '$PROJECT_NAME' webroot to build ... \" \
-                                            && sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
-                                            && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
+                                        # Restart specified services
+                                        for SERVICE in ${DEST_SERVICES_RELOAD[@]}
+                                        do
+                                            $SSH_CONN \
+                                                "echo \"Reload service '$SERVICE'...\" \
+                                                && sudo service $SERVICE reload"
 
-                                        if [ "$?" -eq "0" ]
+                                            if [ "$?" -eq "0" ]
+                                                then
+                                                    echo "OK"
+                                                else
+                                                    echo "FAILED"
+                                            fi
+                                        done
+
+                                        if [ "$JOB_ENV" == "prod" ]
                                             then
-                                                echo "OK"
 
-                                                # Restart specified services
-                                                for SERVICE in ${DEST_SERVICES_RELOAD[@]}
-                                                do
-                                                    $SSH_CONN \
-                                                        "echo \"Reload service '$SERVICE'...\" \
-                                                        && sudo service $SERVICE reload"
-
-                                                    if [ "$?" -eq "0" ]
-                                                        then
-                                                            echo "OK"
-                                                        else
-                                                            echo "FAILED"
-                                                    fi
-                                                done
-
-                                                if [ "$JOB_ENV" == "prod" ]
-                                                    then
-
-                                                        # Disable read-only mode, and rebuild cache.
-                                                        $SSH_CONN \
-                                                            "echo -n \"Disable read-only mode... \" \
-                                                            && cd $DEST_BUILD_PATH && $CLI_PHAR sset site_readonly 0 \
-                                                            && echo \"OK\" \
-                                                            && echo \"Rebuild Drupal cache... \" \
-                                                            && cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
-
-                                                        if [ "$?" -eq "0" ]
-                                                            then
-                                                                echo "OK"
-                                                            else
-                                                                echo "FAILED"
-                                                        fi
-                                                    else
-
-                                                        # Disable maintenance mode, and rebuild cache.
-                                                        $SSH_CONN \
-                                                            "echo \"Disable maintenance mode... OK\" \
-                                                            && cd $DEST_BUILD_PATH && $CLI_PHAR sset system.maintenance_mode FALSE \
-                                                            && echo \"Rebuild Drupal cache... \" \
-                                                            && cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
-
-                                                        if [ "$?" -eq "0" ]
-                                                            then
-                                                                echo "OK"
-                                                            else
-                                                                echo "FAILED"
-                                                        fi
-                                                fi
-
-                                                # Link project .env to new build
+                                                # Disable read-only mode, and rebuild cache.
                                                 $SSH_CONN \
-                                                    "echo -n \"Link project .env to build... \" \
-                                                    && rm -rf $DEST_PATH/.env \
-                                                    && sudo ln -snf $DEST_BUILD_PATH/.env $DEST_PATH/.env"
+                                                    "echo -n \"Disable read-only mode... \" \
+                                                    && cd $DEST_BUILD_PATH && $CLI_PHAR sset site_readonly 0 \
+                                                    && echo \"OK\" \
+                                                    && echo \"Rebuild Drupal cache... \" \
+                                                    && cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
 
                                                 if [ "$?" -eq "0" ]
                                                     then
@@ -371,16 +334,37 @@ if [ "$?" -eq "0" ]
                                                         echo "FAILED"
                                                 fi
                                             else
+
+                                                # Disable maintenance mode, and rebuild cache.
+                                                $SSH_CONN \
+                                                    "echo \"Disable maintenance mode... OK\" \
+                                                    && cd $DEST_BUILD_PATH && $CLI_PHAR sset system.maintenance_mode FALSE \
+                                                    && echo \"Rebuild Drupal cache... \" \
+                                                    && cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
+
+                                                if [ "$?" -eq "0" ]
+                                                    then
+                                                        echo "OK"
+                                                    else
+                                                        echo "FAILED"
+                                                fi
+                                        fi
+
+                                        # Link project .env to new build
+                                        $SSH_CONN \
+                                            "echo -n \"Link project .env to build... \" \
+                                            && rm -rf $DEST_PATH/.env \
+                                            && sudo ln -snf $DEST_BUILD_PATH/.env $DEST_PATH/.env"
+
+                                        if [ "$?" -eq "0" ]
+                                            then
+                                                echo "OK"
+                                            else
                                                 echo "FAILED"
-                                                exit 1
                                         fi
                                     else
                                         echo "FAILED"
-
-                                        if [ "$BOOTSTRAP" -eq "0" ]
-                                            then
-                                                REVERT=1
-                                        fi
+                                        exit 1
                                 fi
                             else
                                 echo "FAILED"

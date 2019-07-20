@@ -156,6 +156,17 @@ if [ "$EXISTS" != "1" ]
 		fi
 fi
 
+# Check local database exists
+echo -n "Local database '$SRC_DATABASE_NAME' exists... "
+RESULT=`$SSH_CONN "mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
+if [ "$RESULT" == "$SRC_DATABASE_NAME" ]
+    then
+        echo "OK"
+    else
+        echo "FAILED"
+        IMPORT=1
+fi
+
 # Link .env to new build
 echo -n "Set .env for workspace... "
 cd $WORKSPACE_PATH && ln -snf $ENV_FILE .env
@@ -224,10 +235,22 @@ if [ "$?" -eq "0" ]
 
 		if [ "$COMPARE" == "1" ]
 			then
+
+                # Flag import if database is empty
+                echo -n "Check local database... "
+                Q1="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$LOCAL_DATABASE_NAME';"
+                RESULT=`mysql -Nse "$Q1"`
+                if [[ "$RESULT" -eq "0" ]]
+                    then
+                        echo "FAILED"
+                        IMPORT=1
+                    else
+                        echo "OK"
+                fi
+
 				echo -n "Compare dump... "
 				#mkdir -m 750 -p $SRC_DUMP_PATH
 				LAST_DUMP_NAME=`ls -t $SRC_DUMP_PATH | head -1`
-				IMPORT=0
 
 				# Compare the new dump size, with the most recent project backup
 				# We are checking the file size, rather than the checksum.
@@ -265,10 +288,11 @@ if [ "$?" -eq "0" ]
 
                                 # Database user creation query
                                 Q1="CREATE USER \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
+                                Q2="FLUSH PRIVILEGES;"
 
                                 $SSH_CONN \
                                     "echo -n \"Setup local database user '$LOCAL_DATABASE_USER' to '$LOCAL_DATABASE_HOSTNAME' for build... \" \
-                                    && mysql -e \"$Q1\""
+                                    && mysql -e \"$Q1$Q2\""
 
                                 if [ "$?" -eq "0" ]
                                     then
@@ -279,7 +303,7 @@ if [ "$?" -eq "0" ]
 
                                 # Database & user permission creation queries
                                 Q1="DROP DATABASE IF EXISTS \\\`$LOCAL_DATABASE_NAME\\\`;"
-                                Q2="CREATE DATABASE IF NOT EXISTS \\\`$LOCAL_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+                                Q2="CREATE DATABASE \\\`$LOCAL_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
                                 Q3="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$LOCAL_DATABASE_NAME\\\`.* TO \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
                                 Q4="FLUSH PRIVILEGES;"
 

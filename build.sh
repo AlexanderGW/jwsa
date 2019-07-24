@@ -290,9 +290,8 @@ if [ "$?" -eq "0" ]
                                 Q1="CREATE USER \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
                                 Q2="FLUSH PRIVILEGES;"
 
-                                $SSH_CONN \
-                                    "echo -n \"Setup local database user '$LOCAL_DATABASE_USER' to '$LOCAL_DATABASE_HOSTNAME' for build... \" \
-                                    && mysql -e \"$Q1$Q2\""
+                                echo -n "Setup local database user '$LOCAL_DATABASE_USER' to '$LOCAL_DATABASE_HOSTNAME' for build... "
+                                mysql -e "$Q1$Q2"
 
                                 if [ "$?" -eq "0" ]
                                     then
@@ -307,9 +306,8 @@ if [ "$?" -eq "0" ]
                                 Q3="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$LOCAL_DATABASE_NAME\\\`.* TO \\\`$LOCAL_DATABASE_USER\\\`@\\\`$LOCAL_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
                                 Q4="FLUSH PRIVILEGES;"
 
-                                $SSH_CONN \
-                                    "echo -n \"Setup local database '$LOCAL_DATABASE_NAME' on '$LOCAL_DATABASE_HOSTNAME' for build... \" \
-                                    && mysql -e \"$Q1$Q2$Q3$Q4\""
+                                echo -n "Setup local database '$LOCAL_DATABASE_NAME' on '$LOCAL_DATABASE_HOSTNAME' for build... "
+                                mysql -e "$Q1$Q2$Q3$Q4"
 
                                 if [ "$?" -eq "0" ]
                                     then
@@ -320,8 +318,8 @@ if [ "$?" -eq "0" ]
                                 fi
 
 								# Import the copied dump
-								echo -n "Import dump to workspace $SRC_DUMP_FILE ... " \
-									&& mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
+								echo -n "Import dump to workspace $SRC_DUMP_FILE ... "
+								mysql $SRC_DATABASE_NAME < $SRC_DUMP_FILE
 
 								if [ "$?" -eq "0" ]
 									then

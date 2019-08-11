@@ -121,6 +121,10 @@ All of these commands run without credentials. Setup a `~/.my.cnf` for the `$DES
 [mysqldump]
  user = myuser
  password = secret
+
+[mysqlshow]
+ user = myuser
+ password = secret
 ```
 
 ### Can I display this information within the CMS?

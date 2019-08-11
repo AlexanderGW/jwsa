@@ -359,7 +359,23 @@ if [ "$?" -eq "0" ]
                 fi
 		fi
 
-		# Source the deploy script (drupal7, drupal8, wordpress, etc...)
+    # Command to run before starting type stage
+    echo "Running pre-platform commands..."
+    for (( i = 0; i < ${#BUILD_CMDS_PRE_PLATFORM[@]} ; i++ ));
+      do
+        INDEX=$(($i + 1))
+        echo "Command [${INDEX}/${#BUILD_CMDS_PRE_PLATFORM[@]}] ... "
+        eval "${BUILD_CMDS_PRE_PLATFORM[$i]}"
+
+        if [ "$?" -eq "0" ]
+          then
+            echo "DONE"
+          else
+            echo "FAILED"
+        fi
+      done
+
+		# Source the build platform script (drupal7, drupal8, wordpress, etc...)
         echo "Sourcing build script '$TYPE'"
         . "$DIR/build/$TYPE.sh"
 	else

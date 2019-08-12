@@ -127,8 +127,8 @@ EXISTS=`if test -d $SRC_DUMP_PATH; then echo \"1\"; else echo \"0\"; fi`
 
 if [ "$EXISTS" != "1" ]
 	then
-		echo -n "Creating source dump path '$SRC_DUMP_PATH'... " \
-			&& install -m 0770 -d $SRC_DUMP_PATH
+		echo -n "Creating source dump path '$SRC_DUMP_PATH'... "
+		install -m 0770 -d $SRC_DUMP_PATH
 
 		if [ "$?" -eq "0" ]
 			then
@@ -144,9 +144,9 @@ EXISTS=`$SSH_CONN \
 
 if [ "$EXISTS" != "1" ]
 	then
+	  	echo -n "Creating destination dump path '$DEST_DUMP_PATH'... "
 		$SSH_CONN \
-			"echo -n \"Creating destination dump path '$DEST_DUMP_PATH'... \" \
-			&& install -g $DEST_SSH_USER -o $DEST_SSH_USER -m 0750 -d $DEST_DUMP_PATH"
+			"install -g $DEST_SSH_USER -o $DEST_SSH_USER -m 0750 -d $DEST_DUMP_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -326,8 +326,8 @@ if [ "$?" -eq "0" ]
 										echo "OK"
 
 										# Delete the dump
-										echo -n "Clean up ... " \
-											&& rm -rf $SRC_DUMP_FILE
+										echo -n "Clean up ... "
+										rm -rf $SRC_DUMP_FILE
 
 										if [ "$?" -eq "0" ]
 											then

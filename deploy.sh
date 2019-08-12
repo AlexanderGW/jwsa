@@ -204,9 +204,9 @@ fi
 # Database user creation query
 Q1="CREATE USER \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
 
+echo -n "Setup destination database user '$DEST_DATABASE_USER' to '$DEST_DATABASE_HOSTNAME' for build... "
 $SSH_CONN \
-    "echo -n \"Setup destination database user '$DEST_DATABASE_USER' to '$DEST_DATABASE_HOSTNAME' for build... \" \
-    && mysql -e \"$Q1\""
+    "mysql -e \"$Q1\""
 
 if [ "$?" -eq "0" ]
     then
@@ -220,9 +220,9 @@ Q1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\` CHARACTER SET utf8
 Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
 Q3="FLUSH PRIVILEGES;"
 
+echo -n "Setup destination database '$DEST_DATABASE_NAME' on '$DEST_DATABASE_HOSTNAME' for build... "
 $SSH_CONN \
-    "echo -n \"Setup destination database '$DEST_DATABASE_NAME' on '$DEST_DATABASE_HOSTNAME' for build... \" \
-    && mysql -e \"$Q1$Q2$Q3\""
+    "mysql -e \"$Q1$Q2$Q3\""
 
 if [ "$?" -eq "0" ]
     then
@@ -245,9 +245,9 @@ EXISTS=`$SSH_CONN \
 
 if [ "$EXISTS" != "1" ]
 	then
+	  	echo -n "Creating asset path '$DEST_ASSET_PATH'... "
 		$SSH_CONN \
-			"echo -n \"Creating asset path '$DEST_ASSET_PATH'... \" \
-			&& sudo install -d -m 0770 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_ASSET_PATH"
+			"sudo install -d -m 0770 -o $DEST_WEB_USER -g $DEST_WEB_USER $DEST_ASSET_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -263,9 +263,9 @@ EXISTS=`$SSH_CONN \
 
 if [ "$EXISTS" != "1" ]
 	then
+	  	echo -n "Creating backup path '$DEST_DUMP_PATH'... "
 		$SSH_CONN \
-			"echo -n \"Creating backup path '$DEST_DUMP_PATH'... \" \
-			&& sudo install -d -m 0770 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_DUMP_PATH"
+			"sudo install -d -m 0770 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_DUMP_PATH"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -276,9 +276,9 @@ if [ "$EXISTS" != "1" ]
 fi
 
 # Make build path
+echo -n "Creating build path '$DEST_BUILD_PATH'... "
 $SSH_CONN \
-	"echo -n \"Creating build path '$DEST_BUILD_PATH'... \" \
-	&& sudo install -d -m 0770 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_BUILD_PATH"
+	"sudo install -d -m 0770 -o $DEST_SSH_USER -g $DEST_SSH_USER $DEST_BUILD_PATH"
 
 if [ "$?" -eq "0" ]
 	then
@@ -346,9 +346,9 @@ if [ "$UPDATED" == "1" ];
 	then
 		for SERVICE in ${DEST_SERVICES_RELOAD[@]}
 		do
+		  	echo "Reload service '$SERVICE'... "
 			$SSH_CONN \
-				"echo \"Reload service '$SERVICE'...\" \
-				&& sudo service $SERVICE reload"
+				"sudo service $SERVICE reload"
 
 			if [ "$?" -eq "0" ]
 				then
@@ -445,9 +445,9 @@ for ID in ${RESULT[@]}
             then
                 Q1="DROP DATABASE \\\`$NAME\\\`;"
 
+                echo -n "Remove old destination database '$NAME'... "
                 $SSH_CONN \
-                    "echo -n \"Remove old destination database '$NAME'... \" \
-                    && mysql -e \"$Q1\""
+                    "mysql -e \"$Q1\""
 
                 if [ "$?" == "0" ]
                     then

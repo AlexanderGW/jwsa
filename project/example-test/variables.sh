@@ -70,6 +70,11 @@ declare -a DATABASE_TABLE_NO_DATA=(
 "watchdog"
 )
 
+# Run commands prior to the platform stage of the build
+declare -a BUILD_CMDS_PRE_PLATFORM=(
+"echo \"foobar\""
+)
+
 # Use MySQL wildcard '%' for host
 #USE_MYSQL_HOST_WILDCARD=1
 

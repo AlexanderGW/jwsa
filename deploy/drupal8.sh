@@ -280,20 +280,20 @@ if [ "$?" -eq "0" ]
                 echo "OK"
                 echo ""
 
-                # Update database
-                echo "Apply Drupal database updates... "
+                # Update configuration
+                echo "Import Drupal configuration... "
                 $SSH_CONN \
-                    "cd $DEST_BUILD_PATH && $CLI_PHAR -y updatedb"
+                    "cd $DEST_BUILD_PATH && $CLI_PHAR -y config-import"
 
                 if [ "$?" -eq "0" ]
                     then
                         echo "OK"
                         echo ""
 
-                        # Update configuration
-                        echo "Import Drupal configuration... "
+                        # Update database
+                        echo "Apply Drupal database updates... "
                         $SSH_CONN \
-                            "cd $DEST_BUILD_PATH && $CLI_PHAR -y config-import"
+                            "cd $DEST_BUILD_PATH && $CLI_PHAR -y updatedb"
 
                         if [ "$?" -eq "0" ]
                             then

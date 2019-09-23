@@ -114,7 +114,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
             else
 
                 # Set maintenance mode
-                echo -n "Enable maintenance mode..."
+                echo -n "Enable maintenance mode... "
                 $SSH_CONN \
                     "cd $DEST_WEBROOT_PATH && $CLI_PHAR sset system.maintenance_mode TRUE"
 

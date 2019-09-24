@@ -56,7 +56,7 @@ if [ "$BOOTSTRAP" -eq "0" ] && [ "$LAST_BUILD_ID" != "0" ]
         echo "OK"
 
         # Make a copy of current build into the new build on dest, to ease diff sync
-		echo "COPY last successful build $DEST_BUILDS_PATH/$LAST_BUILD_ID"
+		    echo "COPY last successful build $DEST_BUILDS_PATH/$LAST_BUILD_ID"
         echo "--> $DEST_BUILD_PATH"
         $SSH_CONN \
             "cp -R $DEST_BUILDS_PATH/$LAST_BUILD_ID/* $DEST_BUILD_PATH"
@@ -148,42 +148,48 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
         fi
     else
-        LOCAL_DATABASE_NAME=$(grep MYSQL_DATABASE $ENV_FILE | cut -d '=' -f2)
-
-        # Dump local database
-        echo -n "Dump local database '$LOCAL_DATABASE_NAME'... "
-        mysqldump $LOCAL_DATABASE_NAME > $SRC_DUMP_FILE
-
-        if [ "$?" -eq "0" ]
+        RESULT=`$SSH_CONN "mysqlshow $DEST_DATABASE_NAME | grep -v Wildcard | grep -o $DEST_DATABASE_NAME"`
+        if [ "$RESULT" != "$DEST_DATABASE_NAME" ]
             then
-                echo "OK"
+                LOCAL_DATABASE_NAME=$(grep MYSQL_DATABASE $ENV_FILE | cut -d '=' -f2)
 
-                # SCP local dump to destination
-                echo "SCP local database to destination $SRC_DUMP_FILE"
-                echo "--> $DEST_DUMP_FILE "
-                scp -i $DEST_IDENTITY \
-                    $SRC_DUMP_FILE \
-                    $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE
+                # Dump local database
+                echo -n "Dump local database '$LOCAL_DATABASE_NAME'... "
+                mysqldump $LOCAL_DATABASE_NAME > $SRC_DUMP_FILE
 
                 if [ "$?" -eq "0" ]
                     then
+                        echo "OK"
 
-                        # Import the copied dump
-                        echo -n "Import dump on destination $DEST_DUMP_FILE ... "
-                        $SSH_CONN \
-                            "mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
+                        # SCP local dump to destination
+                        echo "SCP local database to destination $SRC_DUMP_FILE"
+                        echo "--> $DEST_DUMP_FILE "
+                        scp -i $DEST_IDENTITY \
+                            $SRC_DUMP_FILE \
+                            $DEST_SSH_USER@$DEST_HOST:$DEST_DUMP_FILE
 
                         if [ "$?" -eq "0" ]
                             then
-                                echo "OK"
 
-                                # Delete the dump
-                                echo -n "Clean up ... "
-                                rm -rf $DEST_DUMP_FILE
+                                # Import the copied dump
+                                echo -n "Import dump on destination $DEST_DUMP_FILE ... "
+                                $SSH_CONN \
+                                    "mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
 
                                 if [ "$?" -eq "0" ]
                                     then
                                         echo "OK"
+
+                                        # Delete the dump
+                                        echo -n "Clean up ... "
+                                        rm -rf $DEST_DUMP_FILE
+
+                                        if [ "$?" -eq "0" ]
+                                            then
+                                                echo "OK"
+                                            else
+                                                echo "FAILED"
+                                        fi
                                     else
                                         echo "FAILED"
                                 fi
@@ -192,10 +198,8 @@ if [ "$BOOTSTRAP" -eq "0" ]
                         fi
                     else
                         echo "FAILED"
+                        exit 1
                 fi
-            else
-                echo "FAILED"
-                exit 1
         fi
 fi
 

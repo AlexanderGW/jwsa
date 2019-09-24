@@ -81,7 +81,19 @@ declare -a BUILD_CMDS_PRE_PLATFORM=(
 # Rsync flags and parameters
 # REMEMBER: Exclude .env, assets, cache, test, and tool directories to speed up transfers
 # MUST: Suffix with the with "-e" flag, to allow succeeding text to be executed remotely.
-RSYNC_FLAGS="-al --stats --delete-before --exclude=.env --exclude=.git --exclude=.sass-cache --exclude=node_modules --exclude=simpletest --exclude=tests --exclude=/storage --exclude=/private --exclude=/web/sites/default/files -e"
+RSYNC_FLAGS="-alr \
+--stats \
+--delete-before \
+--exclude=.env \
+--exclude=.git \
+--exclude=.sass-cache \
+--exclude=node_modules \
+--exclude=simpletest \
+--exclude=tests \
+--exclude=/storage \
+--exclude=/private \
+--exclude=/web/sites/default/files \
+-e"
 
 # SSH connection string
 SSH_CONN="ssh -i $DEST_IDENTITY $DEST_SSH_USER@$DEST_HOST"

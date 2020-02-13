@@ -382,6 +382,12 @@ if [ "$?" -eq "0" ]
                                                 fi
                                         fi
 
+                                        echo ""
+                                        echo "--------------------------------------------------------------------------------"
+                                        echo "Deploy: NEW BUILD IS ACTIVE"
+                                        echo "--------------------------------------------------------------------------------"
+                                        echo ""
+
                                         # Link project .env to new build
                                         echo -n "Link project .env to build... "
                                         $SSH_CONN \
@@ -442,6 +448,12 @@ if [ "$?" -eq "0" ]
                                     echo "FAILED"
                             fi
                         done
+
+                        echo ""
+                        echo "--------------------------------------------------------------------------------"
+                        echo "Deploy: NEW BUILD IS ACTIVE"
+                        echo "--------------------------------------------------------------------------------"
+                        echo ""
 
                         # Link project .env to new build
                         echo -n "Link project .env to build... "

@@ -98,7 +98,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
                         # Set read-only mode, and copy the database.
                         echo -n "Copy database '$DEST_DATABASE_CURRENT_NAME' to '$DEST_DATABASE_NAME'... "
                         $SSH_CONN \
-                            "mysqldump $DEST_DATABASE_CURRENT_NAME | mysql $DEST_DATABASE_NAME"
+                            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction | mysql $DEST_DATABASE_NAME"
 
                         if [ "$?" -eq "0" ]
                             then
@@ -125,7 +125,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
                 echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' structure... "
                 $SSH_CONN \
-                    "mysqldump $DEST_DATABASE_CURRENT_NAME --no-data --routines > $DEST_DUMP_FILE"
+                    "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --no-data --routines > $DEST_DUMP_FILE"
 
                 if [ "$?" -eq "0" ]
                     then
@@ -133,7 +133,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
                         echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' data... "
                         $SSH_CONN \
-                            "mysqldump $DEST_DATABASE_CURRENT_NAME --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
+                            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
 
                         if [ "$?" -eq "0" ]
                             then
@@ -155,7 +155,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
                 # Dump local database
                 echo -n "Dump local database '$LOCAL_DATABASE_NAME'... "
-                mysqldump $LOCAL_DATABASE_NAME > $SRC_DUMP_FILE
+                mysqldump $LOCAL_DATABASE_NAME --single-transaction > $SRC_DUMP_FILE
 
                 if [ "$?" -eq "0" ]
                     then

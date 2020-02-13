@@ -214,7 +214,7 @@ if [ "$?" -eq "0" ]
 		COMPARE=0
 		echo -n "Dump destination database '$DEST_DATABASE_NAME' structure... "
 		$SSH_CONN \
-			"mysqldump $DEST_DATABASE_NAME --no-data --routines > $DEST_DUMP_FILE"
+			"mysqldump $DEST_DATABASE_NAME --single-transaction --no-data --routines > $DEST_DUMP_FILE"
 
 		if [ "$?" -eq "0" ]
 			then
@@ -222,7 +222,7 @@ if [ "$?" -eq "0" ]
 
 				echo -n "Dump destination database '$DEST_DATABASE_NAME' data... "
 				$SSH_CONN \
-					"mysqldump $DEST_DATABASE_NAME --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
+					"mysqldump $DEST_DATABASE_NAME --single-transaction --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
 
 				if [ "$?" -eq "0" ]
 					then

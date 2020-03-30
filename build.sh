@@ -158,7 +158,7 @@ fi
 
 # Check local database exists
 echo -n "Local database '$SRC_DATABASE_NAME' exists... "
-RESULT=`$SSH_CONN "mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
+RESULT=$(mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME)
 if [ "$RESULT" == "$SRC_DATABASE_NAME" ]
     then
         echo "OK"
@@ -347,16 +347,16 @@ if [ "$?" -eq "0" ]
 			else
 				echo "FAILED"
 
-                # Use local database, if it exists
-                echo -n "Fall-back to local database '$SRC_DATABASE_NAME'... "
-                RESULT=`$SSH_CONN "mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME"`
-                if [ "$RESULT" == "$SRC_DATABASE_NAME" ]
-                    then
-                        echo "OK"
-                    else
-                        echo "FAILED"
-                        exit 1
-                fi
+        # Use local database, if it exists
+        echo -n "Fall-back to local database '$SRC_DATABASE_NAME'... "
+        RESULT=$(mysqlshow $SRC_DATABASE_NAME | grep -v Wildcard | grep -o $SRC_DATABASE_NAME)
+        if [ "$RESULT" == "$SRC_DATABASE_NAME" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+                exit 1
+        fi
 		fi
 
     # Command to run before starting type stage

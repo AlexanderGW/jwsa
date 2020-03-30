@@ -10,7 +10,7 @@ echo "     888 88888P Y88888       \"888   d88P   888"
 echo "     88P 8888P   Y8888 Y88b  d88P  d8888888888"
 echo "     888 888P     Y888  \"Y8888P\"  d88P     888"
 echo "   .d88P"
-echo " .d88P\"    Jenkins Web Scripts by Alex [1.1.2]"
+echo " .d88P\"    Jenkins Web Scripts by Alex [1.1.3]"
 echo "888P\"      https://github.com/AlexanderGW/jwsa"
 echo ""
 

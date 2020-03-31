@@ -80,9 +80,8 @@ declare -a WEBSERVERS=("apache" "httpd" "nginx")
 declare -a WEBSERVER_CONF_DIRS=("sites-available" "conf.d")
 
 # Package name and paths
-PACKAGE_NAME="$PROJECT_NAME.zip";
-SRC_PACKAGE_PATH="/tmp/$PACKAGE_NAME";
-DEST_PACKAGE_PATH="$DEST_PATH/$PACKAGE_NAME";
+SRC_PACKAGE_PATH="/tmp/$PROJECT_NAME-$DATE.tar";
+DEST_PACKAGE_PATH="$DEST_PATH/$PROJECT_NAME.tar";
 
 # Test SSH connect
 echo -n "Test SSH connection... "
@@ -190,13 +189,13 @@ echo ""
 EXCLUDED_ITEM_STRING=''
 for NAME in "${WORKSPACE_PACKAGE_EXCLUDE[@]}"
   do
-    EXCLUDED_ITEM_STRING+=" --exclude=*${NAME}*"
+    EXCLUDED_ITEM_STRING+=" --exclude ${NAME}"
 done
 
 # Package the workspace
 echo -n "Creating package '$SRC_PACKAGE_PATH'... "
 cd $WORKSPACE_PATH
-zip -rq $SRC_PACKAGE_PATH ./ $EXCLUDED_ITEM_STRING
+tar$EXCLUDED_ITEM_STRING -cf $SRC_PACKAGE_PATH .
 
 if [ "$?" -eq "0" ]
   then

@@ -98,7 +98,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
                         # Set read-only mode, and copy the database.
                         echo -n "Copy database '$DEST_DATABASE_CURRENT_NAME' to '$DEST_DATABASE_NAME'... "
                         $SSH_CONN \
-                            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction | mysql $DEST_DATABASE_NAME"
+                            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --routines | mysql $DEST_DATABASE_NAME"
 
                         if [ "$?" -eq "0" ]
                             then

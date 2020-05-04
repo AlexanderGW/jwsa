@@ -341,26 +341,6 @@ for SERVICE_NAME in "${WEBSERVERS[@]}"
 echo "OK"
 echo ""
 
-# Reload specified services
-if [ "$UPDATED" == "1" ];
-	then
-		for SERVICE in ${DEST_SERVICES_RELOAD[@]}
-		do
-		  	echo "Reload service '$SERVICE'... "
-			$SSH_CONN \
-				"sudo service $SERVICE reload"
-
-			if [ "$?" -eq "0" ]
-				then
-					echo "OK"
-				else
-					echo "FAILED"
-			fi
-		done
-fi
-
-echo ""
-
 # Get hash salt from .env
 HASH_SALT=$(grep HASH_SALT $ENV_FILE | cut -d '=' -f2)
 

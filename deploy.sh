@@ -216,13 +216,52 @@ if [ "$?" -eq "0" ]
 fi
 
 # Database & user permission creation queries
-Q1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-Q2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
-Q3="FLUSH PRIVILEGES;"
+QA1="CREATE DATABASE IF NOT EXISTS \\\`$DEST_DATABASE_NAME\\\`"
+
+# If production, we need to keep the same character set, and collation
+if [ "$JOB_ENV" == "prod" ]
+    then
+        # Get character set of current database
+        QB1="SELECT \\\`default_character_set_name\\\` FROM \\\`information_schema\\\`.\\\`SCHEMATA\\\` WHERE \\\`SCHEMA_NAME\\\` = '$DEST_DATABASE_CURRENT_NAME';"
+
+        echo -n "Get current remote database character set... "
+        DEST_DATABASE_CURRENT_CHARACTER_SET=$($SSH_CONN \
+            "mysql --silent --skip-column-names -e \"$QB1\"")
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+                QA1="$QA1 CHARACTER SET $DEST_DATABASE_CURRENT_CHARACTER_SET"
+            else
+                echo "FAILED"
+
+        fi
+
+        # Get collation of current database
+        QB2="SELECT \\\`default_collation_name\\\` FROM \\\`information_schema\\\`.\\\`SCHEMATA\\\` WHERE \\\`SCHEMA_NAME\\\` = '$DEST_DATABASE_CURRENT_NAME';"
+
+        echo -n "Get current remote database collation... "
+        DEST_DATABASE_CURRENT_COLLATION=$($SSH_CONN \
+            "mysql --silent --skip-column-names -e \"$QB2\"")
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+                QA1="$QA1 COLLATE $DEST_DATABASE_CURRENT_COLLATION"
+            else
+                echo "FAILED"
+
+        fi
+fi
+
+# Database and user creation
+QA1="$QA1;"
+QA2="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \\\`$DEST_DATABASE_NAME\\\`.* TO \\\`$DEST_DATABASE_USER\\\`@\\\`$DEST_DATABASE_HOSTNAME\\\` IDENTIFIED BY '$DEST_DATABASE_PASSWORD';"
+QA3="FLUSH PRIVILEGES;"
 
 echo -n "Setup destination database '$DEST_DATABASE_NAME' on '$DEST_DATABASE_HOSTNAME' for build... "
 $SSH_CONN \
-    "mysql -e \"$Q1$Q2$Q3\""
+    "mysql -e \"$QA1$QA2$QA3\""
 
 if [ "$?" -eq "0" ]
     then

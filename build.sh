@@ -376,8 +376,24 @@ if [ "$?" -eq "0" ]
       done
 
 		# Source the build platform script (drupal7, drupal8, wordpress, etc...)
-        echo "Sourcing build script '$TYPE'"
-        . "$DIR/build/$TYPE.sh"
+    echo "Sourcing build script '$TYPE'"
+    . "$DIR/build/$TYPE.sh"
+
+    # Command to run after finishing type stage
+    echo "Running post-platform commands..."
+    for (( i = 0; i < ${#BUILD_CMDS_POST_PLATFORM[@]} ; i++ ));
+      do
+        INDEX=$(($i + 1))
+        echo "Command [${INDEX}/${#BUILD_CMDS_POST_PLATFORM[@]}] ... "
+        eval "${BUILD_CMDS_POST_PLATFORM[$i]}"
+
+        if [ "$?" -eq "0" ]
+          then
+            echo "DONE"
+          else
+            echo "FAILED"
+        fi
+      done
 	else
 		echo "FAILED"
 fi

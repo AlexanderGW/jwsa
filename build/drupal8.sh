@@ -57,6 +57,7 @@ if [ "$?" -eq "0" ]
                         echo "FAILED"
                     fi
                   done
+                echo "OK"
 
 								# Rebuild cache.
 								echo "Rebuild Drupal cache... "

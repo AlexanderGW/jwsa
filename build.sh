@@ -374,6 +374,8 @@ if [ "$?" -eq "0" ]
             echo "FAILED"
         fi
       done
+    echo "OK"
+    echo ""
 
 		# Source the build platform script (drupal7, drupal8, wordpress, etc...)
     echo "Sourcing build script '$TYPE'"
@@ -394,6 +396,8 @@ if [ "$?" -eq "0" ]
             echo "FAILED"
         fi
       done
+    echo "OK"
+    echo ""
 	else
 		echo "FAILED"
 fi

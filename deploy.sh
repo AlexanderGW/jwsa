@@ -389,7 +389,7 @@ for (( i = 0; i < ${#DEPLOY_CMDS_PRE_PLATFORM[@]} ; i++ ));
   do
     INDEX=$(($i + 1))
     echo "Command [${INDEX}/${#DEPLOY_CMDS_PRE_PLATFORM[@]}] ... "
-    eval "${DEPLOY_CMDS_PRE_PLATFORM[$i]}"
+    $SSH_CONN "${DEPLOY_CMDS_PRE_PLATFORM[$i]}"
 
     if [ "$?" -eq "0" ]
       then
@@ -398,6 +398,8 @@ for (( i = 0; i < ${#DEPLOY_CMDS_PRE_PLATFORM[@]} ; i++ ));
         echo "FAILED"
     fi
   done
+echo "OK"
+echo ""
 
 # Source the deploy script (drupal7, drupal8, wordpress, etc...)
 echo "Sourcing deploy script '$TYPE'"
@@ -409,7 +411,7 @@ for (( i = 0; i < ${#DEPLOY_CMDS_POST_PLATFORM[@]} ; i++ ));
   do
     INDEX=$(($i + 1))
     echo "Command [${INDEX}/${#DEPLOY_CMDS_POST_PLATFORM[@]}] ... "
-    eval "${DEPLOY_CMDS_POST_PLATFORM[$i]}"
+    $SSH_CONN "${DEPLOY_CMDS_POST_PLATFORM[$i]}"
 
     if [ "$?" -eq "0" ]
       then
@@ -418,6 +420,8 @@ for (( i = 0; i < ${#DEPLOY_CMDS_POST_PLATFORM[@]} ; i++ ));
         echo "FAILED"
     fi
   done
+echo "OK"
+echo ""
 
 # Update deployment information
 $SSH_CONN \

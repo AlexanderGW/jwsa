@@ -310,7 +310,7 @@ if [ "$?" -eq "0" ]
                                     do
                                         INDEX=$(($i + 1))
                                         echo "Command [${INDEX}/${#DEPLOY_CMDS_CUSTOM_PLATFORM[@]}] ... "
-                                        eval "${DEPLOY_CMDS_CUSTOM_PLATFORM[$i]}"
+                                        $SSH_CONN "${DEPLOY_CMDS_CUSTOM_PLATFORM[$i]}"
 
                                         if [ "$?" -eq "0" ]
                                             then
@@ -319,6 +319,7 @@ if [ "$?" -eq "0" ]
                                                 echo "FAILED"
                                         fi
                                     done
+                                echo "OK"
 
                                 # Set webroot symlinks
                                 echo -n "Set '$PROJECT_NAME' webroot to build ... "

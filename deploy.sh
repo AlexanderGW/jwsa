@@ -383,9 +383,41 @@ echo ""
 # Get hash salt from .env
 HASH_SALT=$(grep HASH_SALT $ENV_FILE | cut -d '=' -f2)
 
+# Command to run before starting type stage
+echo "Running pre-platform commands..."
+for (( i = 0; i < ${#DEPLOY_CMDS_PRE_PLATFORM[@]} ; i++ ));
+  do
+    INDEX=$(($i + 1))
+    echo "Command [${INDEX}/${#DEPLOY_CMDS_PRE_PLATFORM[@]}] ... "
+    eval "${DEPLOY_CMDS_PRE_PLATFORM[$i]}"
+
+    if [ "$?" -eq "0" ]
+      then
+        echo "DONE"
+      else
+        echo "FAILED"
+    fi
+  done
+
 # Source the deploy script (drupal7, drupal8, wordpress, etc...)
 echo "Sourcing deploy script '$TYPE'"
 . "$DIR/deploy/$TYPE.sh"
+
+# Command to run after finishing type stage
+echo "Running post-platform deploy commands..."
+for (( i = 0; i < ${#DEPLOY_CMDS_POST_PLATFORM[@]} ; i++ ));
+  do
+    INDEX=$(($i + 1))
+    echo "Command [${INDEX}/${#DEPLOY_CMDS_POST_PLATFORM[@]}] ... "
+    eval "${DEPLOY_CMDS_POST_PLATFORM[$i]}"
+
+    if [ "$?" -eq "0" ]
+      then
+        echo "DONE"
+      else
+        echo "FAILED"
+    fi
+  done
 
 # Update deployment information
 $SSH_CONN \

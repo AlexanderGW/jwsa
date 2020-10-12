@@ -304,6 +304,22 @@ if [ "$?" -eq "0" ]
                                 echo "OK"
                                 echo ""
 
+                                # Custom commands to run after core Drupal commands
+                                echo "Running custom deploy commands..."
+                                for (( i = 0; i < ${#DEPLOY_CMDS_CUSTOM_PLATFORM[@]} ; i++ ));
+                                    do
+                                        INDEX=$(($i + 1))
+                                        echo "Command [${INDEX}/${#DEPLOY_CMDS_CUSTOM_PLATFORM[@]}] ... "
+                                        eval "${DEPLOY_CMDS_CUSTOM_PLATFORM[$i]}"
+
+                                        if [ "$?" -eq "0" ]
+                                            then
+                                                echo "DONE"
+                                            else
+                                                echo "FAILED"
+                                        fi
+                                    done
+
                                 # Set webroot symlinks
                                 echo -n "Set '$PROJECT_NAME' webroot to build ... "
                                 $SSH_CONN \

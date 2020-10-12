@@ -42,7 +42,23 @@ if [ "$?" -eq "0" ]
 								echo "OK"
 								echo ""
 
-								# Disable maintenance mode, and rebuild cache.
+                # Custom commands to run after core Drupal commands
+                echo "Running custom build commands..."
+                for (( i = 0; i < ${#BUILD_CMDS_CUSTOM_PLATFORM[@]} ; i++ ));
+                  do
+                    INDEX=$(($i + 1))
+                    echo "Command [${INDEX}/${#BUILD_CMDS_CUSTOM_PLATFORM[@]}] ... "
+                    eval "${BUILD_CMDS_CUSTOM_PLATFORM[$i]}"
+
+                    if [ "$?" -eq "0" ]
+                      then
+                        echo "DONE"
+                      else
+                        echo "FAILED"
+                    fi
+                  done
+
+								# Rebuild cache.
 								echo "Rebuild Drupal cache... "
 								cd $WORKSPACE_PATH && $CLI_PHAR -y cache-rebuild > /dev/null
 

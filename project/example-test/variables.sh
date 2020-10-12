@@ -75,6 +75,32 @@ declare -a BUILD_CMDS_PRE_PLATFORM=(
 "echo \"foobar\""
 )
 
+# Run commands during the build platform stage, after the required platform commands
+declare -a BUILD_CMDS_CUSTOM_PLATFORM=(
+"echo \"foobar\""
+)
+
+# Run commands after the platform stage of the build
+declare -a BUILD_CMDS_POST_PLATFORM=(
+"echo \"foobar\""
+)
+
+# Run commands prior to the platform stage of the deployment
+declare -a DEPLOY_CMDS_PRE_PLATFORM=(
+"echo \"foobar\""
+)
+
+# Run commands during the deploy platform stage, after the required platform commands
+declare -a DEPLOY_CMDS_CUSTOM_PLATFORM=(
+"echo \"foobar\""
+)
+
+# Run commands after the platform stage of the deployment
+declare -a DEPLOY_CMDS_POST_PLATFORM=(
+"echo \"foobar\""
+)
+
+
 # Use MySQL wildcard '%' for host
 #USE_MYSQL_HOST_WILDCARD=1
 

@@ -529,14 +529,14 @@ echo "OK"
 # Trim old local backups, keep last two
 echo -n "Trim local backups... "
 SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
-cd $SRC_DUMP_PATH && ls -t $SRC_DUMP_PATH | tail -n +3 | xargs rm
+cd $SRC_DUMP_PATH && ls -t $SRC_DUMP_PATH | tail -n +3 | xargs rm -rf
 
 echo "OK"
 
 # Trim old remote backups, keep last five
 echo -n "Trim remote backups... "
 $SSH_CONN \
-    "cd $DEST_DUMP_PATH && ls -t $DEST_DUMP_PATH | tail -n +3 | xargs rm"
+    "cd $DEST_DUMP_PATH && ls -t $DEST_DUMP_PATH | tail -n +3 | xargs rm -rf"
 
 echo "OK"
 echo ""

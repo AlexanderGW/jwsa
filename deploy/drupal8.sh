@@ -213,7 +213,7 @@ if [ "$LAST_BUILD_ID" != "0" ]
             then
                 echo "OK"
 
-                echo -n "Update .env MYSQL_DATABASE for new build..."
+                echo -n "Update .env MYSQL_DATABASE for new build... "
 
                 # Replace destination database name
                 $SSH_CONN \

@@ -217,7 +217,7 @@ if [ "$LAST_BUILD_ID" != "0" ]
 
                 # Replace destination database name
                 $SSH_CONN \
-                    "sed -i \"s,^MYSQL_DATABASE=.*\\\$,MYSQL_DATABASE=\${DEST_DATABASE_NAME},\" $DEST_BUILD_PATH/.env"
+                    "sed -i \"s,^MYSQL_DATABASE=.*\\\$,MYSQL_DATABASE=${DEST_DATABASE_NAME},\" $DEST_BUILD_PATH/.env"
 
                 if [ "$?" -eq "0" ]
                     then

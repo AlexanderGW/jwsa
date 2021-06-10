@@ -536,7 +536,7 @@ echo "OK"
 # Trim old remote backups, keep last five
 echo -n "Trim remote backups... "
 $SSH_CONN \
-    "cd $DEST_DUMP_PATH && ls -t $DEST_DUMP_PATH | tail -n +3 | xargs rm -rf"
+    "cd $DEST_DUMP_PATH && ls -t $DEST_DUMP_PATH | tail -n +5 | xargs rm -rf"
 
 echo "OK"
 echo ""

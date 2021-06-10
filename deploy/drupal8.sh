@@ -216,7 +216,9 @@ if [ "$LAST_BUILD_ID" != "0" ]
                 echo -n "Update .env MYSQL_DATABASE for new build..."
 
                 # Replace destination database name
-                sed -i "s,^MYSQL_DATABASE=.*\$,MYSQL_DATABASE=${DEST_DATABASE_NAME}," $DEST_BUILD_PATH/.env
+                $SSH_CONN \
+                    "sed -i \"s,^MYSQL_DATABASE=.*\\\$,MYSQL_DATABASE=\${DEST_DATABASE_NAME},\" $DEST_BUILD_PATH/.env"
+
                 if [ "$?" -eq "0" ]
                     then
                         echo "OK"
@@ -551,8 +553,7 @@ if [ "$REVERT" -eq "1" ]
         if [ "$?" -eq "0" ]
             then
                 echo "OK"
-            else
-                echo "FAILED"
+            else echo "FAILED"
         fi
 
         echo ""

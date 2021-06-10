@@ -250,17 +250,17 @@ if [ "$EXISTS" != "1" ]
         echo -n "Write .env for build... "
         $SSH_CONN \
             "echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
-        MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
-        MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
-        MYSQL_PORT=3306\\n\
-        MYSQL_USER=$DEST_DATABASE_USER\\n\
-        \\n\
-        HASH_SALT=$HASH_SALT\\n\
-        \\n\
-        APP_ENV=$JOB_ENV\\n\
-        \\n\
-        PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
-        TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
+MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
+MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
+MYSQL_PORT=3306\\n\
+MYSQL_USER=$DEST_DATABASE_USER\\n\
+\\n\
+HASH_SALT=$HASH_SALT\\n\
+\\n\
+APP_ENV=$JOB_ENV\\n\
+\\n\
+PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
+TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
 
         if [ "$?" -eq "0" ]
             then

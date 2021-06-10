@@ -239,7 +239,10 @@ if [ "$LAST_BUILD_ID" != "0" ]
         fi
 fi
 
-if [ ! -f "$DEST_BUILD_PATH/.env" ];
+EXISTS=`$SSH_CONN \
+	"if test -f $DEST_BUILD_PATH/.env; then echo \"1\"; else echo \"0\"; fi"`
+
+if [ "$EXISTS" != "1" ]
     then
         # Write new build .env
         echo "WARNING! Existing .env not found, a new one will be created."

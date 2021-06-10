@@ -203,31 +203,67 @@ if [ "$BOOTSTRAP" -eq "0" ]
         fi
 fi
 
-# Write new build .env
-echo -n "Write .env for build... "
-$SSH_CONN \
-    "echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
-MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
-MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
-MYSQL_PORT=3306\\n\
-MYSQL_USER=$DEST_DATABASE_USER\\n\
-\\n\
-HASH_SALT=$HASH_SALT\\n\
-\\n\
-APP_ENV=$JOB_ENV\\n\
-\\n\
-PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
-TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
-
-if [ "$?" -eq "0" ]
+if [ "$LAST_BUILD_ID" != "0" ]
     then
-        echo "OK"
-    else
-        echo "FAILED"
+        echo -n "Copy .env from previous build... "
+        $SSH_CONN \
+            "cp $DEST_BUILDS_PATH/$LAST_BUILD_ID/.env $DEST_BUILD_PATH/.env"
 
-        if [ "$BOOTSTRAP" -eq "0" ]
+        if [ "$?" -eq "0" ]
             then
-                REVERT=1
+                echo "OK"
+
+                echo -n "Update .env MYSQL_DATABASE for new build..."
+
+                # Replace destination database name
+                sed -i "s,^MYSQL_DATABASE=.*\$,MYSQL_DATABASE=${DEST_DATABASE_NAME}," $DEST_BUILD_PATH/.env
+                if [ "$?" -eq "0" ]
+                    then
+                        echo "OK"
+                    else
+                        echo "FAILED"
+
+                        if [ "$JOB_ENV" == "prod" ]
+                            then
+                                echo "OK"
+                            else
+                                echo "FAILED"
+                                echo "Production deployments implement incrementing database name suffixes, continuing would break the build"
+                                exit 1
+                        fi
+                fi
+            else
+                echo "FAILED"
+        fi
+fi
+
+if [ ! -f "$DEST_BUILD_PATH/.env" ];
+    then
+        # Write new build .env
+        echo "WARNING! Existing .env not found, a new one will be created."
+
+        echo -n "Write .env for build... "
+        $SSH_CONN \
+            "echo -e \"MYSQL_DATABASE=$DEST_DATABASE_NAME\\n\
+        MYSQL_HOSTNAME=$DEST_DATABASE_HOSTNAME\\n\
+        MYSQL_PASSWORD=$DEST_DATABASE_PASSWORD\\n\
+        MYSQL_PORT=3306\\n\
+        MYSQL_USER=$DEST_DATABASE_USER\\n\
+        \\n\
+        HASH_SALT=$HASH_SALT\\n\
+        \\n\
+        APP_ENV=$JOB_ENV\\n\
+        \\n\
+        PRIVATE_PATH=$DEST_PRIVATE_PATH\\n\
+        TWIG_PHP_STORAGE_PATH=$DEST_STORAGE_PATH/php\" > $DEST_BUILD_PATH/.env"
+
+        if [ "$?" -eq "0" ]
+            then
+                echo "OK"
+            else
+                echo "FAILED"
+                echo "Check permissions for .env writing"
+                exit 1
         fi
 fi
 

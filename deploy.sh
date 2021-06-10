@@ -529,7 +529,7 @@ echo "OK"
 # Trim old local backups, keep last two
 echo -n "Trim local backups... "
 SRC_DUMP_PATH="$DIR/project/$PROJECT_NAME/backup"
-cd $SRC_DUMP_PATH && ls -t $SRC_DUMP_PATH | tail -n +3 | xargs rm -rf
+cd $SRC_DUMP_PATH && ls -t $SRC_DUMP_PATH | tail -n +4 | xargs rm -rf
 
 echo "OK"
 

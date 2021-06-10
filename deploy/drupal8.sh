@@ -546,7 +546,7 @@ if [ "$REVERT" -eq "1" ]
         # Restore dumped database
         echo -n "Restoring database: $DEST_DUMP_FILE ... "
         $SSH_CONN \
-            "mysql $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
+            "mysql --force $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
 
         if [ "$?" -eq "0" ]
             then

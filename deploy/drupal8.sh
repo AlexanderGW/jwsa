@@ -325,72 +325,73 @@ if [ "$?" -eq "0" ]
                 echo "OK"
                 echo ""
 
-                # Update configuration
-                echo "Import Drupal configuration... "
+                # Update database
+                echo "Apply Drupal database updates... "
                 $SSH_CONN \
-                    "cd $DEST_BUILD_PATH && $CLI_PHAR -y config-import"
+                    "cd $DEST_BUILD_PATH && $CLI_PHAR -y updatedb --no-cache-clear"
 
                 if [ "$?" -eq "0" ]
                     then
                         echo "OK"
                         echo ""
 
-                        # Update database
-                        echo "Apply Drupal database updates... "
+                        # Rebuild cache.
+                        echo "Rebuild Drupal cache... "
                         $SSH_CONN \
-                            "cd $DEST_BUILD_PATH && $CLI_PHAR -y updatedb"
+                            "cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
 
                         if [ "$?" -eq "0" ]
                             then
                                 echo "OK"
                                 echo ""
 
-                                # Custom commands to run after core Drupal commands
-                                echo "Running custom deploy commands..."
-                                for (( i = 0; i < ${#DEPLOY_CMDS_CUSTOM_PLATFORM[@]} ; i++ ));
-                                    do
-                                        INDEX=$(($i + 1))
-                                        echo "Command [${INDEX}/${#DEPLOY_CMDS_CUSTOM_PLATFORM[@]}] ... "
-                                        $SSH_CONN "${DEPLOY_CMDS_CUSTOM_PLATFORM[$i]}"
-
-                                        if [ "$?" -eq "0" ]
-                                            then
-                                                echo "DONE"
-                                            else
-                                                echo "FAILED"
-                                        fi
-                                    done
-                                echo "OK"
-
-                                # Set webroot symlinks
-                                echo -n "Set '$PROJECT_NAME' webroot to build ... "
+                                # Update configuration
+                                echo "Import Drupal configuration... "
                                 $SSH_CONN \
-                                    "sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
-                                    && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
+                                    "cd $DEST_BUILD_PATH && $CLI_PHAR -y config-import"
 
                                 if [ "$?" -eq "0" ]
                                     then
                                         echo "OK"
+                                        echo ""
 
-                                        # Restart specified services
-                                        for SERVICE in ${DEST_SERVICES_RELOAD[@]}
-                                        do
-                                            echo "Reload service '$SERVICE'... "
-                                            $SSH_CONN \
-                                                "sudo service $SERVICE reload"
+                                        # Custom commands to run after core Drupal commands
+                                        echo "Running custom deploy commands..."
+                                        for (( i = 0; i < ${#DEPLOY_CMDS_CUSTOM_PLATFORM[@]} ; i++ ));
+                                            do
+                                                INDEX=$(($i + 1))
+                                                echo "Command [${INDEX}/${#DEPLOY_CMDS_CUSTOM_PLATFORM[@]}] ... "
+                                                $SSH_CONN "${DEPLOY_CMDS_CUSTOM_PLATFORM[$i]}"
 
-                                            if [ "$?" -eq "0" ]
-                                                then
-                                                    echo "OK"
-                                                else
-                                                    echo "FAILED"
-                                            fi
-                                        done
+                                                if [ "$?" -eq "0" ]
+                                                    then
+                                                        echo "DONE"
+                                                        echo ""
+                                                    else
+                                                        echo "FAILED"
+                                                fi
+                                            done
+                                        echo "OK"
+                                        echo ""
 
+                                        # Rebuild cache.
+                                        echo "Rebuild Drupal cache... "
+                                        $SSH_CONN \
+                                            "cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
+
+                                        if [ "$?" -eq "0" ]
+                                            then
+                                                echo "OK"
+                                                echo ""
+                                            else
+                                                echo "FAILED"
+                                        fi
+
+                                        # Disable maintenance/read-only and a final cache rebuild
                                         if [ "$JOB_ENV" == "prod" ]
                                             then
 
-                                                # Disable read-only mode, and rebuild cache.
+                                                # Disable read-only mode
                                                 echo -n "Disable read-only mode... "
                                                 $SSH_CONN \
                                                     "cd $DEST_BUILD_PATH && $CLI_PHAR sset site_readonly 0"
@@ -398,8 +399,9 @@ if [ "$?" -eq "0" ]
                                                 if [ "$?" -eq "0" ]
                                                     then
                                                         echo "OK"
+                                                        echo ""
 
-                                                        # Disable read-only mode, and rebuild cache.
+                                                        # Rebuild cache.
                                                         echo "Rebuild Drupal cache... "
                                                         $SSH_CONN \
                                                             "cd $DEST_BUILD_PATH && $CLI_PHAR -y cache-rebuild > /dev/null"
@@ -407,11 +409,13 @@ if [ "$?" -eq "0" ]
                                                         if [ "$?" -eq "0" ]
                                                             then
                                                                 echo "OK"
+                                                                echo ""
                                                             else
                                                                 echo "FAILED"
                                                         fi
                                                     else
                                                         echo "FAILED"
+                                                        echo "WARNING: Site may not be available to front-end users!"
                                                 fi
                                             else
 
@@ -423,6 +427,7 @@ if [ "$?" -eq "0" ]
                                                 if [ "$?" -eq "0" ]
                                                     then
                                                         echo "OK"
+                                                        echo ""
 
                                                         # Disable maintenance mode, and rebuild cache.
                                                         echo -n "Rebuild Drupal cache... "
@@ -432,36 +437,94 @@ if [ "$?" -eq "0" ]
                                                         if [ "$?" -eq "0" ]
                                                             then
                                                                 echo "OK"
+                                                                echo ""
                                                             else
                                                                 echo "FAILED"
                                                         fi
                                                     else
                                                         echo "FAILED"
+                                                        echo "WARNING: Site may not be available to front-end users!"
                                                 fi
                                         fi
 
-                                        echo ""
-                                        echo "--------------------------------------------------------------------------------"
-                                        echo "Deploy: NEW BUILD IS ACTIVE"
-                                        echo "--------------------------------------------------------------------------------"
-                                        echo ""
-
-                                        # Link project .env to new build
-                                        echo -n "Link project .env to build... "
+                                        # Drupal deploy hooks
+                                        # NOTE: Supported in Drush 10+ - so to avoid breaking deployments, will fail silently. Any reliance on this will not be tested
+                                        echo "Run Drupal deploy hooks... "
                                         $SSH_CONN \
-                                            "rm -rf $DEST_PATH/.env \
-                                            && sudo ln -snf $DEST_BUILD_PATH/.env $DEST_PATH/.env"
+                                            "cd $DEST_BUILD_PATH && $CLI_PHAR -v -y deploy:hook"
 
                                         if [ "$?" -eq "0" ]
                                             then
                                                 echo "OK"
+                                                echo ""
                                             else
                                                 echo "FAILED"
                                         fi
+
+                                        # Set webroot symlinks
+                                        echo -n "Set '$PROJECT_NAME' webroot to build ... "
+                                        $SSH_CONN \
+                                            "sudo ln -sfn $DEST_BUILD_PATH $DEST_WEBROOT_PATH \
+                                            && sudo ln -sfn $DEST_ASSET_PATH $DEST_BUILD_ASSETS_PATH"
+
+                                        if [ "$?" -eq "0" ]
+                                            then
+                                                echo "OK"
+                                                echo ""
+
+                                                # Restart specified services
+                                                for SERVICE in ${DEST_SERVICES_RELOAD[@]}
+                                                do
+                                                    echo "Reload service '$SERVICE'... "
+                                                    $SSH_CONN \
+                                                        "sudo service $SERVICE reload"
+
+                                                    if [ "$?" -eq "0" ]
+                                                        then
+                                                            echo "OK"
+                                                            echo ""
+                                                        else
+                                                            echo "FAILED"
+                                                    fi
+                                                done
+
+                                                echo ""
+                                                echo "--------------------------------------------------------------------------------"
+                                                echo "Deploy: NEW BUILD IS ACTIVE"
+                                                echo "--------------------------------------------------------------------------------"
+                                                echo ""
+
+                                                # Link project .env to new build
+                                                echo -n "Link project .env to build... "
+                                                $SSH_CONN \
+                                                    "rm -rf $DEST_PATH/.env \
+                                                    && sudo ln -snf $DEST_BUILD_PATH/.env $DEST_PATH/.env"
+
+                                                if [ "$?" -eq "0" ]
+                                                    then
+                                                        echo "OK"
+                                                        echo ""
+                                                    else
+                                                        echo "FAILED"
+                                                fi
+                                            else
+                                                echo "FAILED"
+                                                exit 1
+                                        fi
                                     else
                                         echo "FAILED"
-                                        exit 1
+
+                                        if [ "$BOOTSTRAP" -eq "0" ]
+                                            then
+                                                REVERT=1
+                                        fi
                                 fi
+
+                                echo ""
+
+
+
+
                             else
                                 echo "FAILED"
 
@@ -470,8 +533,6 @@ if [ "$?" -eq "0" ]
                                         REVERT=1
                                 fi
                         fi
-
-                        echo ""
                     else
                         echo "FAILED"
 

@@ -24,18 +24,31 @@ if [ "$?" -eq "0" ]
 				echo "OK"
 				echo ""
 
-				# Update configuration
-				echo "Import Drupal configuration..."
-				cd $WORKSPACE_PATH && $CLI_PHAR -y config-import
+				# Update database
+        echo "Apply Drupal database updates..."
+        cd $WORKSPACE_PATH && $CLI_PHAR -y updatedb --no-cache-clear
 
 				if [ "$?" -eq "0" ]
 					then
 						echo "OK"
 						echo ""
 
-						# Update database
-						echo "Apply Drupal database updates..."
-						cd $WORKSPACE_PATH && $CLI_PHAR -y updatedb
+						# Rebuild cache.
+            echo "Rebuild Drupal cache... "
+            cd $WORKSPACE_PATH && $CLI_PHAR -y cache-rebuild > /dev/null
+
+            if [ "$?" -eq "0" ]
+              then
+                echo "OK"
+						    echo ""
+              else
+                echo "FAILED"
+                exit 1
+            fi
+
+						# Update configuration
+            echo "Import Drupal configuration..."
+            cd $WORKSPACE_PATH && $CLI_PHAR -y config-import
 
 						if [ "$?" -eq "0" ]
 							then
@@ -53,11 +66,14 @@ if [ "$?" -eq "0" ]
                     if [ "$?" -eq "0" ]
                       then
                         echo "DONE"
+                        echo ""
                       else
                         echo "FAILED"
+										    exit 1
                     fi
                   done
                 echo "OK"
+								echo ""
 
 								# Rebuild cache.
 								echo "Rebuild Drupal cache... "
@@ -66,10 +82,25 @@ if [ "$?" -eq "0" ]
 								if [ "$?" -eq "0" ]
 									then
 										echo "OK"
+								    echo ""
 									else
 										echo "FAILED"
 										exit 1
 								fi
+
+                # Drupal deploy hooks
+                # NOTE: Supported in Drush 10+ - so to avoid breaking deployments, will fail silently. Any reliance on this will not be tested
+                echo "Run Drupal deploy hooks... "
+                cd $WORKSPACE_PATH && $CLI_PHAR -v -y deploy:hook
+
+                if [ "$?" -eq "0" ]
+                  then
+                    echo "OK"
+                    echo ""
+                  else
+                    echo "FAILED"
+                    # Fails silently, in cases of old Drush with no 'deploy' command
+                fi
 							else
 								echo "FAILED"
 								exit 1

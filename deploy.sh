@@ -446,16 +446,16 @@ if [ "$DESTINATION_DATABASE_DUMPED" -eq "0" ]
                 echo "OK"
 
                 echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' data... "
-				$SSH_CONN \
-					"mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
+                $SSH_CONN \
+                  "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --force --no-create-info --skip-triggers $IGNORED_TABLES_STRING >> $DEST_DUMP_FILE"
 
-				if [ "$?" -eq "0" ]
-					then
-						echo "OK"
-						DESTINATION_DATABASE_DUMPED=1
-					else
-						echo "FAILED"
-				fi
+                if [ "$?" -eq "0" ]
+                  then
+                    echo "OK"
+                    DESTINATION_DATABASE_DUMPED=1
+                  else
+                    echo "FAILED"
+                fi
             else
                 echo "FAILED"
         fi

@@ -71,7 +71,17 @@ if [ -z ${TYPE+x} ];
 		echo "OK"
 fi
 
-JOB_ENV=`echo $1 | cut -d'-' -f2`
+# App environment, mainly used in cases such as Drupal settings inclusion (dev, stage, prod, etc.)
+if [ -z ${APP_ENV+x} ];
+	then
+    APP_ENV=`echo $PROJECT_NAME | cut -d'-' -f2`
+fi
+
+# Job environment (dev, stage, prod, etc.) - Used to determine deployment workflow
+if [ -z ${JOB_ENV+x} ];
+	then
+    JOB_ENV=`echo $PROJECT_NAME | cut -d'-' -f2`
+fi
 
 # Load .env file
 . "$DIR/.env"

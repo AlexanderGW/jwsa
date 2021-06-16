@@ -78,8 +78,11 @@ fi
 # Override the DEST_WEBROOT_PATH with the Jenkins workspace
 DEST_WEBROOT_PATH=$WORKSPACE_PATH
 
-# Environment we are building (dev, stage, prod, etc.)
-JOB_ENV=`echo $1 | cut -d'-' -f2`
+# Job environment (dev, stage, prod, etc.) - Used to determine deployment workflow
+if [ -z ${JOB_ENV+x} ];
+	then
+    JOB_ENV=`echo $PROJECT_NAME | cut -d'-' -f2`
+fi
 
 IMPORT=0
 

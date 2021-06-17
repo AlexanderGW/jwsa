@@ -281,37 +281,6 @@ $SSH_CONN \
 if [ "$?" -eq "0" ]
     then
         echo "OK"
-
-        # Restart specified services
-        for SERVICE in ${DEST_SERVICES_RESTART[@]}
-        do
-            echo "Restart service '$SERVICE'... "
-            $SSH_CONN \
-                "sudo service $SERVICE restart"
-
-            if [ "$?" -eq "0" ]
-                then
-                    echo "OK"
-                else
-                    echo "FAILED"
-            fi
-        done
-
-        # Reload specified services
-        for SERVICE in ${DEST_SERVICES_RELOAD[@]}
-        do
-            echo "Reload service '$SERVICE'... "
-            $SSH_CONN \
-                "sudo service $SERVICE reload"
-
-            if [ "$?" -eq "0" ]
-                then
-                    echo "OK"
-                else
-                    echo "FAILED"
-            fi
-        done
-
         echo ""
 
         # Rebuild cache

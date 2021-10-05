@@ -84,6 +84,7 @@ if [ -z ${JOB_ENV+x} ];
     JOB_ENV=`echo $PROJECT_NAME | cut -d'-' -f2`
 fi
 
+COMPARE=0
 IMPORT=0
 
 # Database locations
@@ -167,6 +168,7 @@ if [ "$RESULT" == "$SRC_DATABASE_NAME" ]
         echo "OK"
     else
         echo "FAILED"
+        COMPARE=1
         IMPORT=1
 fi
 
@@ -214,7 +216,6 @@ if [ "$?" -eq "0" ]
 		done
 
 		# Sync database from the destination env, to the workspace env
-		COMPARE=0
 		echo -n "Dump destination database '$DEST_DATABASE_NAME' structure... "
 		$SSH_CONN \
 			"mysqldump $DEST_DATABASE_NAME --single-transaction --no-data --routines > $DEST_DUMP_FILE"
@@ -239,17 +240,17 @@ if [ "$?" -eq "0" ]
 		if [ "$COMPARE" == "1" ]
 			then
 
-                # Flag import if database is empty
-                echo -n "Check local database... "
-                Q1="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$LOCAL_DATABASE_NAME';"
-                RESULT=`mysql -Nse "$Q1"`
-                if [[ "$RESULT" -eq "0" ]]
-                    then
-                        echo "FAILED"
-                        IMPORT=1
-                    else
-                        echo "OK"
-                fi
+        # Flag import if database is empty
+        echo -n "Check local database... "
+        Q1="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$LOCAL_DATABASE_NAME';"
+        RESULT=`mysql -Nse "$Q1"`
+        if [[ "$RESULT" -eq "0" ]]
+          then
+            echo "FAILED"
+            IMPORT=1
+          else
+            echo "OK"
+        fi
 
 				echo -n "Compare dump... "
 				#mkdir -m 750 -p $SRC_DUMP_PATH

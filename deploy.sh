@@ -94,6 +94,20 @@ fi
 # Load .env file
 . "$DIR/.env"
 
+# Attempt fall-back for unknown build ID
+if [ -z ${LAST_BUILD_ID+x} ];
+  then
+    echo -n "Last Jenkins build ID unknown, attempt to find deployed build... "
+    LAST_BUILD_ID=`$SSH_CONN "cat $DEST_PATH/.active-build"`
+    if [ "$?" -eq "0" ]
+      then
+        echo "OK [$LAST_BUILD_ID]"
+      else
+        echo "FAILED"
+        LAST_BUILD_ID="0"
+    fi
+fi
+
 declare -a WEBSERVERS=("apache" "httpd" "nginx")
 declare -a WEBSERVER_CONF_DIRS=("sites-available" "conf.d")
 

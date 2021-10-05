@@ -279,6 +279,37 @@ if [ "$?" -eq "0" ]
 				if [ "$IMPORT" == "1" ]
 					then
 
+            # Database user creation query
+            Q1="CREATE USER \`$LOCAL_DATABASE_USER\`@\`$LOCAL_DATABASE_HOSTNAME\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
+            Q2="FLUSH PRIVILEGES;"
+
+            echo -n "Setup local database user '$LOCAL_DATABASE_USER' to '$LOCAL_DATABASE_HOSTNAME' for build... "
+            mysql -e "$Q1$Q2"
+
+            if [ "$?" -eq "0" ]
+                then
+                    echo "OK"
+                else
+                    echo "FAILED"
+            fi
+
+            # Database & user permission creation queries
+            Q1="DROP DATABASE IF EXISTS \`$LOCAL_DATABASE_NAME\`;"
+            Q2="CREATE DATABASE \`$LOCAL_DATABASE_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+            Q3="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \`$LOCAL_DATABASE_NAME\`.* TO \`$LOCAL_DATABASE_USER\`@\`$LOCAL_DATABASE_HOSTNAME\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
+            Q4="FLUSH PRIVILEGES;"
+
+            echo -n "Setup local database '$LOCAL_DATABASE_NAME' on '$LOCAL_DATABASE_HOSTNAME' for build... "
+            mysql -e "$Q1$Q2$Q3$Q4"
+
+            if [ "$?" -eq "0" ]
+                then
+                    echo "OK"
+                else
+                    echo "FAILED"
+                    exit 1
+            fi
+
 						# SCP dump from destination
 						echo "SCP $SRC_DUMP_FILE"
 						echo "<-- $DEST_DUMP_FILE "
@@ -288,37 +319,6 @@ if [ "$?" -eq "0" ]
 
 						if [ "$?" -eq "0" ]
 							then
-
-                                # Database user creation query
-                                Q1="CREATE USER \`$LOCAL_DATABASE_USER\`@\`$LOCAL_DATABASE_HOSTNAME\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
-                                Q2="FLUSH PRIVILEGES;"
-
-                                echo -n "Setup local database user '$LOCAL_DATABASE_USER' to '$LOCAL_DATABASE_HOSTNAME' for build... "
-                                mysql -e "$Q1$Q2"
-
-                                if [ "$?" -eq "0" ]
-                                    then
-                                        echo "OK"
-                                    else
-                                        echo "FAILED"
-                                fi
-
-                                # Database & user permission creation queries
-                                Q1="DROP DATABASE IF EXISTS \`$LOCAL_DATABASE_NAME\`;"
-                                Q2="CREATE DATABASE \`$LOCAL_DATABASE_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-                                Q3="GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON \`$LOCAL_DATABASE_NAME\`.* TO \`$LOCAL_DATABASE_USER\`@\`$LOCAL_DATABASE_HOSTNAME\` IDENTIFIED BY '$LOCAL_DATABASE_PASSWORD';"
-                                Q4="FLUSH PRIVILEGES;"
-
-                                echo -n "Setup local database '$LOCAL_DATABASE_NAME' on '$LOCAL_DATABASE_HOSTNAME' for build... "
-                                mysql -e "$Q1$Q2$Q3$Q4"
-
-                                if [ "$?" -eq "0" ]
-                                    then
-                                        echo "OK"
-                                    else
-                                        echo "FAILED"
-                                        exit 1
-                                fi
 
 								# Import the copied dump
 								echo -n "Import dump to workspace $SRC_DUMP_FILE ... "

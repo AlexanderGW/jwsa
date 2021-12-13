@@ -98,7 +98,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
                         # Set read-only mode, and copy the database.
                         echo -n "Copy database '$DEST_DATABASE_CURRENT_NAME' to '$DEST_DATABASE_NAME'... "
                         $SSH_CONN \
-                            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --routines | mysql $DEST_DATABASE_NAME"
+                            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction | mysql $DEST_DATABASE_NAME"
 
                         if [ "$?" -eq "0" ]
                             then
@@ -125,7 +125,7 @@ if [ "$BOOTSTRAP" -eq "0" ]
 
                 echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' structure... "
                 $SSH_CONN \
-                    "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --no-data --routines > $DEST_DUMP_FILE"
+                    "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --no-data > $DEST_DUMP_FILE"
 
                 if [ "$?" -eq "0" ]
                     then
@@ -521,6 +521,7 @@ if [ "$?" -eq "0" ]
                 if [ "$?" -eq "0" ]
                     then
                         echo "OK"
+                        echo ""
 
                         # Restart specified services
                         for SERVICE in ${DEST_SERVICES_RELOAD[@]}
@@ -532,6 +533,7 @@ if [ "$?" -eq "0" ]
                             if [ "$?" -eq "0" ]
                                 then
                                     echo "OK"
+                                    echo ""
                                 else
                                     echo "FAILED"
                             fi

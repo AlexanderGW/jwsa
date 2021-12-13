@@ -218,7 +218,7 @@ if [ "$?" -eq "0" ]
 		# Sync database from the destination env, to the workspace env
 		echo -n "Dump destination database '$DEST_DATABASE_NAME' structure... "
 		$SSH_CONN \
-			"mysqldump $DEST_DATABASE_NAME --single-transaction --no-data --routines > $DEST_DUMP_FILE"
+			"mysqldump $DEST_DATABASE_NAME --single-transaction --no-data > $DEST_DUMP_FILE"
 
 		if [ "$?" -eq "0" ]
 			then

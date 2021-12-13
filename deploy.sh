@@ -463,7 +463,7 @@ if [ "$DESTINATION_DATABASE_DUMPED" -eq "0" ]
     then
         echo -n "Dump destination database '$DEST_DATABASE_CURRENT_NAME' structure... "
         $SSH_CONN \
-            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --no-data --routines > $DEST_DUMP_FILE"
+            "mysqldump $DEST_DATABASE_CURRENT_NAME --single-transaction --no-data > $DEST_DUMP_FILE"
 
         if [ "$?" -eq "0" ]
             then

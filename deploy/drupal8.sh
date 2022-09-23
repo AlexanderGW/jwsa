@@ -580,18 +580,22 @@ if [ "$REVERT" -eq "1" ]
         echo "********************************************************************************"
         echo "********************************************************************************"
 
-        # Restore dumped database
-        echo -n "Restoring database: $DEST_DUMP_FILE ... "
-        $SSH_CONN \
-            "mysql --force $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
-
-        if [ "$?" -eq "0" ]
+        # Restore dumped database (only needed on non production environments, as production deployment databases are cloned)
+        if [ "$JOB_ENV" != "prod" ]
             then
-                echo "OK"
-            else echo "FAILED"
-        fi
+                echo -n "Restoring database: $DEST_DUMP_FILE ... "
+                $SSH_CONN \
+                    "mysql --force $DEST_DATABASE_NAME < $DEST_DUMP_FILE"
 
-        echo ""
+                if [ "$?" -eq "0" ]
+                    then
+                        echo "OK"
+                    else
+                        echo "FAILED"
+                fi
+
+                echo ""
+        fi
 
         # Create project webroot symlink to last successful job build
         echo -n "Set '$PROJECT_NAME' webroot to previous build... "
